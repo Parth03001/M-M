@@ -550,8 +550,8 @@ class _CaptureScreenState extends State<CaptureScreen> {
                       if (_imageBytes == null && _isCameraInitialized)
                         Center(
                           child: Container(
-                            width: 250,
-                            height: 250,
+                            width: 180,
+                            height: 180,
                             decoration: BoxDecoration(
                               border: Border.all(
                                 color: Color(0xFFDC143C),
