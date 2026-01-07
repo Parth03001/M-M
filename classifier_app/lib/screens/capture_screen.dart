@@ -188,6 +188,94 @@ class _CaptureScreenState extends State<CaptureScreen> {
         rethrow;
       }
 
+      // Validate detection results
+      bool shouldShowWarning = false;
+      String warningMessage = '';
+
+      if (result.boxes.isEmpty) {
+        // No detections found
+        shouldShowWarning = true;
+        warningMessage = 'Connector not detected. Please capture the image more closely and clearly.';
+        _debugLogs.add('⚠️ No detections found');
+      } else {
+        // Check highest confidence
+        final sortedBoxes = List<BoundingBox>.from(result.boxes)
+          ..sort((a, b) => b.confidence.compareTo(a.confidence));
+        final highestConfidence = sortedBoxes.first.confidence;
+
+        if (highestConfidence < 0.25) {
+          // Low confidence detection
+          shouldShowWarning = true;
+          warningMessage = 'Low confidence detection (${(highestConfidence * 100).toStringAsFixed(1)}%). Please capture the image more closely and clearly.';
+          _debugLogs.add('⚠️ Low confidence: ${(highestConfidence * 100).toStringAsFixed(1)}%');
+        }
+      }
+
+      // If validation failed, show dialog and reset
+      if (shouldShowWarning) {
+        setState(() {
+          _isAnalyzing = false;
+        });
+
+        if (mounted) {
+          await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                title: Row(
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      color: Colors.orange,
+                      size: 28,
+                    ),
+                    SizedBox(width: 12),
+                    Text(
+                      'Detection Warning',
+                      style: TextStyle(
+                        color: Color(0xFFDC143C),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                content: Text(
+                  warningMessage,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[800],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      // Reset to retake
+                      _retakePhoto();
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: Color(0xFFDC143C),
+                    ),
+                    child: Text(
+                      'RETAKE PHOTO',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+        return; // Exit early, don't show results
+      }
+
       setState(() {
         _detectionResult = result;
         // Select the box with highest confidence, or first box if available
