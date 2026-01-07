@@ -317,8 +317,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                           },
                                         ),
                                         // Expandable content - Image with bounding box
-                                        if (isExpanded && detection.imageBytes != null)
-                                          _buildExpandedContent(detection),
+                                        if (isExpanded)
+                                          detection.imageBytes != null &&
+                                                  _hasValidBoundingBox(detection)
+                                              ? _buildExpandedContent(detection)
+                                              : _buildNoImageMessage(),
                                       ],
                                     ),
                                   );
@@ -363,6 +366,56 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  bool _hasValidBoundingBox(Detection detection) {
+    // Check if bounding box coordinates are valid
+    // Valid box should have x2 > x1 and y2 > y1, and all values should be > 0
+    return detection.boundingBoxX1 >= 0 &&
+        detection.boundingBoxY1 >= 0 &&
+        detection.boundingBoxX2 > detection.boundingBoxX1 &&
+        detection.boundingBoxY2 > detection.boundingBoxY1;
+  }
+
+  Widget _buildNoImageMessage() {
+    return Container(
+      padding: EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(16),
+          bottomRight: Radius.circular(16),
+        ),
+      ),
+      child: Column(
+        children: [
+          Divider(color: Colors.grey[300], thickness: 1),
+          SizedBox(height: 16),
+          Icon(
+            Icons.image_not_supported_outlined,
+            color: Colors.grey[400],
+            size: 48,
+          ),
+          SizedBox(height: 12),
+          Text(
+            'No image data available',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            'This detection was saved without image data',
+            style: TextStyle(
+              color: Colors.grey[500],
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
     );
   }
