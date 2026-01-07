@@ -618,35 +618,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: color,
-                    width: 3,
+                    width: 1.5,
                   ),
                   color: color.withOpacity(0.1),
-                ),
-                child: Stack(
-                  children: [
-                    // Label at top
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: color,
-                          borderRadius: BorderRadius.only(
-                            bottomRight: Radius.circular(4),
-                          ),
-                        ),
-                        child: Text(
-                          '$className ${(confidence * 100).toStringAsFixed(0)}%',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ),

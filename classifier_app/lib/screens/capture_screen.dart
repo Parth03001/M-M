@@ -928,6 +928,58 @@ class _CaptureScreenState extends State<CaptureScreen> {
                 ), // Close Container
               ), // Close Expanded
 
+              // Connection Status Container (below image, above capture button)
+              if (!_isAnalyzing &&
+                  _detectionResult != null &&
+                  _selectedBox != null)
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: _selectedBox!.className == 'OK'
+                          ? Colors.green.withOpacity(0.1)
+                          : Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _selectedBox!.className == 'OK'
+                            ? Colors.green
+                            : Colors.red,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _selectedBox!.className == 'OK'
+                              ? Icons.check_circle
+                              : Icons.cancel,
+                          color: _selectedBox!.className == 'OK'
+                              ? Colors.green
+                              : Colors.red,
+                          size: 24,
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            _selectedBox!.className == 'OK'
+                                ? 'Connector is properly connected'
+                                : 'Connector is not properly connected',
+                            style: TextStyle(
+                              color: _selectedBox!.className == 'OK'
+                                  ? Colors.green[800]
+                                  : Colors.red[800],
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
               // Camera Action Buttons
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 20),
@@ -1057,7 +1109,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
     return _detectionResult!.boxes.map((box) {
       final isSelected = _selectedBox == box;
       final color = box.className == 'OK' ? Colors.green : Colors.red;
-      final borderWidth = isSelected ? 4.0 : 2.0;
+      final borderWidth = isSelected ? 2.0 : 1.5;
 
       // Scale and offset bounding box coordinates
       final x1 = (box.x1 * scaleX) + offsetX;
@@ -1082,32 +1134,6 @@ class _CaptureScreenState extends State<CaptureScreen> {
                 width: borderWidth,
               ),
               color: color.withOpacity(isSelected ? 0.2 : 0.1),
-            ),
-            child: Stack(
-              children: [
-                // Label at top
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: BorderRadius.only(
-                        bottomRight: Radius.circular(4),
-                      ),
-                    ),
-                    child: Text(
-                      '${box.className} ${(box.confidence * 100).toStringAsFixed(0)}%',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
             ),
           ),
         ),
