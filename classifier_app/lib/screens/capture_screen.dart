@@ -208,6 +208,21 @@ class _CaptureScreenState extends State<CaptureScreen> {
           shouldShowWarning = true;
           warningMessage = 'Low confidence detection (${(highestConfidence * 100).toStringAsFixed(1)}%). Please capture the image more closely and clearly.';
           _debugLogs.add('⚠️ Low confidence: ${(highestConfidence * 100).toStringAsFixed(1)}%');
+        } else if (result.boxes.length > 1) {
+          // Multiple detections - check if all have confidence > 25%
+          final lowConfidenceBoxes = result.boxes.where((box) => box.confidence < 0.25).toList();
+
+          if (lowConfidenceBoxes.isNotEmpty) {
+            // Some detections have low confidence
+            shouldShowWarning = true;
+            warningMessage = 'Multiple detections found with some having low confidence. Please ensure only one connector is clearly visible in the frame.';
+            _debugLogs.add('⚠️ Multiple detections with low confidence: ${lowConfidenceBoxes.length}/${result.boxes.length}');
+          } else {
+            // Multiple detections all with good confidence - warn about multiple objects
+            shouldShowWarning = true;
+            warningMessage = 'Multiple connectors detected (${result.boxes.length}). Please capture only one connector at a time.';
+            _debugLogs.add('⚠️ Multiple detections found: ${result.boxes.length}');
+          }
         }
       }
 
