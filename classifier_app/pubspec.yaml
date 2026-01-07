@@ -1,0 +1,48 @@
+name: classifier_app
+description: Quality Inspector App
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Ultralytics YOLO - Official plugin for YOLO models
+  ultralytics_yolo: ^0.1.43
+  
+  # For camera
+  image_picker: ^1.0.7
+  camera: ^0.11.0+2
+  mobile_scanner: ^5.2.3
+  
+  # For image processing
+  image: ^4.1.7
+  
+  # For file paths
+  path_provider: ^2.1.2
+  
+  # Drift database
+  drift: ^2.30.0
+  drift_flutter: ^0.2.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  drift_dev: ^2.30.0
+  build_runner: ^2.10.4
+
+flutter:
+  uses-material-design: true
+  
+  # Assets
+  assets:
+    - assets/best_float32.tflite
+    - assets/labels.txt
+    - assets/logo.png
+  
+  # Note: For Android, place .tflite model in android/app/src/main/assets/
+  # For iOS, use .mlpackage or .mlmodel format
