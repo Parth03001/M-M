@@ -152,16 +152,13 @@ class BarcodeScanResultScreen extends StatelessWidget {
                         padding: EdgeInsets.all(20),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Color(0xFFD4AF37),
-                            width: 1,
-                          ),
+                          borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 4,
-                              offset: Offset(0, 2),
+                              color: Color(0xFFDC143C).withOpacity(0.1),
+                              blurRadius: 12,
+                              offset: Offset(0, 4),
+                              spreadRadius: 2,
                             ),
                           ],
                         ),
@@ -317,16 +314,13 @@ class BarcodeScanResultScreen extends StatelessWidget {
                         padding: EdgeInsets.all(20),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Color(0xFFD4AF37),
-                            width: 1,
-                          ),
+                          borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 4,
-                              offset: Offset(0, 2),
+                              color: Color(0xFFDC143C).withOpacity(0.1),
+                              blurRadius: 12,
+                              offset: Offset(0, 4),
+                              spreadRadius: 2,
                             ),
                           ],
                         ),

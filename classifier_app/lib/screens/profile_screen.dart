@@ -115,10 +115,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             decoration: BoxDecoration(
                               color: Color(0xFFDC143C),
                               shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Color(0xFFD4AF37),
-                                width: 3,
-                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Color(0xFFDC143C).withOpacity(0.3),
+                                  blurRadius: 15,
+                                  spreadRadius: 3,
+                                ),
+                              ],
                             ),
                             child: Icon(
                               Icons.person,

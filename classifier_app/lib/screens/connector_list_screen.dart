@@ -138,17 +138,14 @@ class _ConnectorListScreenState extends State<ConnectorListScreen> {
               width: double.infinity,
               padding: EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
-                border: Border(
-                  top: BorderSide(
-                    color: Color(0xFFD4AF37), // Golden-yellow
-                    width: 1,
+                color: Colors.white.withOpacity(0.95),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0xFFDC143C).withOpacity(0.08),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
                   ),
-                  bottom: BorderSide(
-                    color: Color(0xFFD4AF37), // Golden-yellow
-                    width: 1,
-                  ),
-                ),
+                ],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -197,6 +194,17 @@ class _ConnectorListScreenState extends State<ConnectorListScreen> {
                   itemBuilder: (context, index) {
                     return Container(
                       margin: EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0xFFDC143C).withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
                       child: ElevatedButton(
                         onPressed: () {
                           // Open capture screen
@@ -228,13 +236,14 @@ class _ConnectorListScreenState extends State<ConnectorListScreen> {
                           padding: EdgeInsets.symmetric(
                               horizontal: 20, vertical: 16),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: BorderSide(
-                              color: Color(0xFFD4AF37), // Golden-yellow
-                              width: 1,
-                            ),
+                            borderRadius: BorderRadius.circular(16),
                           ),
                           elevation: 0,
+                          shadowColor: Color(0xFFDC143C).withOpacity(0.2),
+                        ).copyWith(
+                          overlayColor: MaterialStateProperty.all(
+                            Color(0xFFDC143C).withOpacity(0.05),
+                          ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,

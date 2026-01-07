@@ -215,17 +215,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                     margin: EdgeInsets.only(bottom: 12),
                                     decoration: BoxDecoration(
                                       color: Colors.white,
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color:
-                                            Color(0xFFD4AF37), // Golden-yellow
-                                        width: 1,
-                                      ),
+                                      borderRadius: BorderRadius.circular(16),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withOpacity(0.05),
-                                          blurRadius: 4,
-                                          offset: Offset(0, 2),
+                                          color: Color(0xFFDC143C).withOpacity(0.08),
+                                          blurRadius: 10,
+                                          offset: Offset(0, 3),
+                                          spreadRadius: 1,
                                         ),
                                       ],
                                     ),
