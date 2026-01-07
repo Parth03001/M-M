@@ -14,7 +14,7 @@ class ScannerScreen extends StatefulWidget {
   _ScannerScreenState createState() => _ScannerScreenState();
 }
 
-class _ScannerScreenState extends State<ScannerScreen> {
+class _ScannerScreenState extends State<ScannerScreen> with SingleTickerProviderStateMixin {
   int _selectedIndex = 0; // Home is selected
   final MobileScannerController _scannerController = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
@@ -25,8 +25,32 @@ class _ScannerScreenState extends State<ScannerScreen> {
   bool _hasNavigated = false; // Prevent multiple navigations
   List<BoundingBox> _boundingBoxes = [];
 
+  // Animation controller for scanning line
+  late AnimationController _animationController;
+  late Animation<double> _scanAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: Duration(seconds: 2),
+      vsync: this,
+    );
+
+    _scanAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    // Start the animation and loop it
+    _animationController.repeat(reverse: true);
+  }
+
   @override
   void dispose() {
+    _animationController.dispose();
     _scannerController.dispose();
     super.dispose();
   }
@@ -40,6 +64,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
     // Avoid processing the same barcode multiple times
     if (_scannedBarcode == barcode.rawValue) return;
+
+    // Stop the scanning animation
+    _animationController.stop();
 
     setState(() {
       _isProcessing = true;
@@ -77,6 +104,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
               _hasNavigated = false;
               _scannedBarcode = null;
             });
+            // Restart the scanning animation
+            _animationController.repeat(reverse: true);
           }
         });
       }
@@ -86,6 +115,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
         setState(() {
           _hasNavigated = false;
         });
+        // Restart the scanning animation on error
+        _animationController.repeat(reverse: true);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error processing barcode: $e'),
@@ -189,8 +220,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
                           // Scanner frame overlay
                           Center(
                             child: Container(
-                              width: 250,
-                              height: 250,
+                              width: 200,
+                              height: 200,
                               decoration: BoxDecoration(
                                 border: Border.all(
                                   color: Color(0xFFDC143C),
@@ -199,6 +230,36 @@ class _ScannerScreenState extends State<ScannerScreen> {
                               ),
                               child: Stack(
                                 children: [
+                                  // Animated scanning line
+                                  AnimatedBuilder(
+                                    animation: _scanAnimation,
+                                    builder: (context, child) {
+                                      return Positioned(
+                                        top: _scanAnimation.value * 200,
+                                        left: 0,
+                                        right: 0,
+                                        child: Container(
+                                          height: 2,
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                Colors.transparent,
+                                                Color(0xFFDC143C),
+                                                Colors.transparent,
+                                              ],
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Color(0xFFDC143C).withOpacity(0.5),
+                                                blurRadius: 8,
+                                                spreadRadius: 2,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
                                   // Corner brackets
                                   Positioned(
                                     top: 0,
