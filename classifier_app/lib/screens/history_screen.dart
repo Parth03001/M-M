@@ -575,20 +575,49 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final imageWidth = image.width.toDouble();
     final imageHeight = image.height.toDouble();
 
-    // Calculate display size maintaining aspect ratio
-    final aspectRatio = imageWidth / imageHeight;
-    final displayWidth = maxWidth * 0.95;
-    final displayHeight = displayWidth / aspectRatio;
+    // Calculate display size maintaining aspect ratio with max constraints
+    final maxDisplayWidth = maxWidth * 0.95;
+    final maxDisplayHeight = 400.0; // Match the constraint in the widget tree
 
-    // Calculate scale factors
-    final scaleX = displayWidth / imageWidth;
-    final scaleY = displayHeight / imageHeight;
+    // Determine actual display size based on aspect ratio and constraints
+    final imageAspectRatio = imageWidth / imageHeight;
+    double displayWidth, displayHeight;
 
-    // Scale bounding box coordinates
-    final scaledX1 = x1 * scaleX;
-    final scaledY1 = y1 * scaleY;
-    final scaledX2 = x2 * scaleX;
-    final scaledY2 = y2 * scaleY;
+    // Calculate size that fits within both width and height constraints
+    if (maxDisplayWidth / imageAspectRatio <= maxDisplayHeight) {
+      // Width is the limiting factor
+      displayWidth = maxDisplayWidth;
+      displayHeight = displayWidth / imageAspectRatio;
+    } else {
+      // Height is the limiting factor
+      displayHeight = maxDisplayHeight;
+      displayWidth = displayHeight * imageAspectRatio;
+    }
+
+    // Calculate scale factors - account for BoxFit.contain
+    final containerAspectRatio = displayWidth / displayHeight;
+
+    double scaleX, scaleY, offsetX, offsetY;
+
+    if (imageAspectRatio > containerAspectRatio) {
+      // Image is wider - fit to width
+      scaleX = displayWidth / imageWidth;
+      scaleY = scaleX;
+      offsetX = 0;
+      offsetY = (displayHeight - (imageHeight * scaleY)) / 2;
+    } else {
+      // Image is taller - fit to height
+      scaleY = displayHeight / imageHeight;
+      scaleX = scaleY;
+      offsetX = (displayWidth - (imageWidth * scaleX)) / 2;
+      offsetY = 0;
+    }
+
+    // Scale and offset bounding box coordinates
+    final scaledX1 = (x1 * scaleX) + offsetX;
+    final scaledY1 = (y1 * scaleY) + offsetY;
+    final scaledX2 = (x2 * scaleX) + offsetX;
+    final scaledY2 = (y2 * scaleY) + offsetY;
 
     final boxWidth = scaledX2 - scaledX1;
     final boxHeight = scaledY2 - scaledY1;
