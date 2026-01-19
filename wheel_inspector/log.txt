@@ -1,0 +1,20 @@
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Could not determine the dependencies of task ':ultralytics_yolo:bundleLibCompileToJarRelease'.
+> Could not create task ':ultralytics_yolo:compileReleaseJavaWithJavac'.
+   > Failed to calculate the value of task ':ultralytics_yolo:compileReleaseJavaWithJavac' property 'javaCompiler'.
+      > Cannot find a Java installation on your machine matching this tasks requirements: {languageVersion=17, vendor=any, implementation=vendor-specific} for WINDOWS on x86_64.
+         > No locally installed toolchains match and toolchain download repositories have not been configured.
+
+* Try:
+> Learn more about toolchain auto-detection at https://docs.gradle.org/8.7/userguide/toolchains.html#sec:auto_detection.
+> Learn more about toolchain repositories at https://docs.gradle.org/8.7/userguide/toolchains.html#sub:download_repositories.
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 52s
+Running Gradle task 'assembleRelease'...                           54.1s
+Gradle task assembleRelease failed with exit code 1
