@@ -1,19 +1,18 @@
-Try `flutter pub outdated` for more information.
 PS C:\Users\50014665\M-M\wheel_inspector> flutter build apk --release
 Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 2192 bytes (99.9% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
+ERROR: Missing classes detected while running R8. Please add the missing classes or apply additional keep rules that are generated in C:\Users\50014665\M-M\wheel_inspector\build\app\outputs\mapping\release\missing_rules.txt.
+ERROR: R8: Missing class java.beans.BeanInfo (referenced from: java.util.Map org.yaml.snakeyaml.introspector.PropertyUtils.getPropertiesMap(java.lang.Class, org.yaml.snakeyaml.introspector.BeanAccess))
+Missing class java.beans.FeatureDescriptor (referenced from: java.util.Map org.yaml.snakeyaml.introspector.PropertyUtils.getPropertiesMap(java.lang.Class, org.yaml.snakeyaml.introspector.BeanAccess) and 1 other context)
+Missing class java.beans.IntrospectionException (referenced from: java.util.Map org.yaml.snakeyaml.introspector.PropertyUtils.getPropertiesMap(java.lang.Class, org.yaml.snakeyaml.introspector.BeanAccess))
+Missing class java.beans.Introspector (referenced from: java.util.Map org.yaml.snakeyaml.introspector.PropertyUtils.getPropertiesMap(java.lang.Class, org.yaml.snakeyaml.introspector.BeanAccess))
+Missing class java.beans.PropertyDescriptor (referenced from: java.beans.PropertyDescriptor org.yaml.snakeyaml.introspector.MethodProperty.property and 4 other contexts)
 
 FAILURE: Build failed with an exception.
 
 * What went wrong:
-Execution failed for task ':app:processReleaseResources'.
-> A failure occurred while executing com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask$TaskAction
-   > Android resource linking failed
-     ERROR: C:\Users\50014665\M-M\wheel_inspector\build\app\intermediates\packaged_manifests\release\processReleaseManifestForPackage\AndroidManifest.xml:44: AAPT: error: resource mipmap/ic_launcher (aka com.example.wheel_inspector:mipmap/ic_launcher) not found.
-
-     ERROR: C:\Users\50014665\M-M\wheel_inspector\android\app\src\main\AndroidManifest.xml:11:9-28:20: AAPT: error: resource style/LaunchTheme (aka com.example.wheel_inspector:style/LaunchTheme) not found.
-
-     ERROR: C:\Users\50014665\M-M\wheel_inspector\android\app\src\main\AndroidManifest.xml:20:13-23:17: AAPT: error: resource style/NormalTheme (aka com.example.wheel_inspector:style/NormalTheme) not found.
-
+Execution failed for task ':app:minifyReleaseWithR8'.
+> A failure occurred while executing com.android.build.gradle.internal.tasks.R8Task$R8Runnable
+   > Compilation failed to complete
 
 * Try:
 > Run with --stacktrace option to get the stack trace.
@@ -21,7 +20,7 @@ Execution failed for task ':app:processReleaseResources'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 1m 51s
-Running Gradle task 'assembleRelease'...                          112.6s
+BUILD FAILED in 4m 11s
+Running Gradle task 'assembleRelease'...                          253.4s
 Gradle task assembleRelease failed with exit code 1
 PS C:\Users\50014665\M-M\wheel_inspector>
