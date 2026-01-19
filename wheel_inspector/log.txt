@@ -1,0 +1,22 @@
+11 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+(ai) PS C:\Users\50014665\M-M\wheel_inspector> flutter build apk --release
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Could not determine the dependencies of task ':ultralytics_yolo:bundleLibCompileToJarRelease'.
+> Could not create task ':ultralytics_yolo:compileReleaseJavaWithJavac'.
+   > Failed to calculate the value of task ':ultralytics_yolo:compileReleaseJavaWithJavac' property 'javaCompiler'.
+      > javax.net.ssl.SSLHandshakeException: PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 22s
+Running Gradle task 'assembleRelease'...                           24.1s
+Gradle task assembleRelease failed with exit code 1
+(ai) PS C:\Users\50014665\M-M\wheel_inspector>
