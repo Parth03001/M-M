@@ -1,0 +1,4 @@
+rim_black
+cap_black
+rim_grey
+cap_grey

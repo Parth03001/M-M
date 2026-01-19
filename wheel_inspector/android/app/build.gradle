@@ -1,0 +1,58 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+android {
+    namespace = "com.example.wheel_inspector"
+    // tflite_flutter requires Android SDK 36
+    compileSdk = 36
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {
+        // ultralytics_yolo requires Java 17
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    defaultConfig {
+        applicationId = "com.example.wheel_inspector"
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
+
+    // Required for tflite - don't compress .tflite files
+    aaptOptions {
+        noCompress 'tflite'
+        noCompress 'lite'
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.debug
+
+            // ProGuard/R8 rules for ultralytics_yolo and dependencies
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            // Enable minification
+            minifyEnabled true
+            shrinkResources true
+        }
+    }
+}
+
+dependencies {
+    // Using litert (Google's optimized TensorFlow Lite runtime)
+}
+
+flutter {
+    source = "../.."
+}
