@@ -1,108 +1,155 @@
-# Java 21 Configuration for Wheel Inspector
+# Java Configuration for Wheel Inspector
 
-## Issues Encountered
+## Problem Summary
 
-### Issue 1: Java Version Mismatch
+The `ultralytics_yolo` package requires Java 17, but Gradle cannot auto-detect your Java installation due to network/SSL restrictions. You have Java 21 installed, which is fully compatible (Java 21 can compile to Java 17 targets).
+
+## Issues Fixed
+
+### Issue 1: Java Version Not Found
 ```
-Cannot find a Java installation on your machine matching this tasks requirements: {languageVersion=17, vendor=any, implementation=vendor-specific}
+Cannot find a Java installation on your machine matching this tasks requirements: {languageVersion=17}
+No locally installed toolchains match and toolchain auto-provisioning is not enabled.
 ```
-**Solution:** Updated project to use Java 21 (which you have installed)
 
-### Issue 2: SSL Certificate Error
+### Issue 2: SSL Certificate Errors (during auto-download)
 ```
-javax.net.ssl.SSLHandshakeException: PKIX path building failed:
-sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target
+javax.net.ssl.SSLHandshakeException: PKIX path building failed
 ```
-**Solution:** Disabled auto-download to use your local Java 21 installation instead
 
-## Changes Applied
+## Solution: Configure Gradle to Use Your Java 21
 
-### 1. Updated Java Version to 21
-**File:** `android/app/build.gradle`
-- Changed `sourceCompatibility` and `targetCompatibility` from Java 17 to Java 21
-- Updated `kotlinOptions.jvmTarget` to "21"
+We configure the project to:
+1. **Target Java 17** (required by ultralytics_yolo)
+2. **Use Java 21 JDK** to compile (backward compatible)
+3. **Disable auto-download** to avoid SSL issues
 
-### 2. Configured Gradle for Local Java
-**File:** `android/gradle.properties`
-- Enabled `org.gradle.java.installations.auto-detect=true` - finds locally installed Java
-- Set `org.gradle.java.installations.auto-download=false` - prevents SSL issues
+## Setup Instructions (REQUIRED)
 
-### 3. Removed Foojay Plugin
-**File:** `android/settings.gradle`
-- Removed the Foojay resolver plugin (not needed since we use local Java)
+### Option 1: Configure gradle.properties (Recommended)
 
-## Setting up JAVA_HOME (IMPORTANT)
+1. **Find your Java 21 installation path**
 
-For Gradle to find your Java 21 installation, you **must** set the `JAVA_HOME` environment variable:
+   Open PowerShell and run:
+   ```powershell
+   where java
+   ```
 
-### Step 1: Find Your Java Installation
-Common locations:
-- `C:\Program Files\Java\jdk-21`
-- `C:\Program Files\OpenJDK\jdk-21`
-- `C:\Program Files\Eclipse Adoptium\jdk-21`
+   Common locations:
+   - `C:\Program Files\Java\jdk-21`
+   - `C:\Program Files\Microsoft\jdk-21.0.9.10-hotspot`
+   - `C:\Program Files\OpenJDK\jdk-21`
+   - `C:\Program Files\Eclipse Adoptium\jdk-21`
 
-### Step 2: Set JAVA_HOME on Windows
+2. **Edit `wheel_inspector/android/gradle.properties`**
+
+   Find this line (around line 8):
+   ```properties
+   # org.gradle.java.home=
+   ```
+
+   Uncomment it and set your Java path:
+   ```properties
+   org.gradle.java.home=C:\\Program Files\\Microsoft\\jdk-21.0.9.10-hotspot
+   ```
+
+   **IMPORTANT:** Use double backslashes `\\` in the path!
+
+3. **Save and try building**
+   ```bash
+   cd wheel_inspector
+   flutter build apk --release
+   ```
+
+### Option 2: Set JAVA_HOME Environment Variable
+
+If you prefer system-wide configuration:
 
 1. Press `Win + R`, type `sysdm.cpl`, press Enter
-2. Go to "Advanced" tab → Click "Environment Variables"
+2. Go to "Advanced" tab → "Environment Variables"
 3. Under "System variables", click "New"
-4. **Variable name:** `JAVA_HOME`
-5. **Variable value:** Your JDK 21 path (e.g., `C:\Program Files\Java\jdk-21`)
-6. Click OK
+   - **Variable name:** `JAVA_HOME`
+   - **Variable value:** `C:\Program Files\Microsoft\jdk-21.0.9.10-hotspot` (your actual path)
+4. Click OK
+5. **Restart your terminal/PowerShell**
+6. Verify:
+   ```powershell
+   echo $env:JAVA_HOME
+   java -version
+   ```
 
-### Step 3: Add to PATH
+## Changes Applied to Project
 
-1. In "System variables", find and select "Path"
-2. Click "Edit"
-3. Click "New"
-4. Add: `%JAVA_HOME%\bin`
-5. Click OK on all windows
+### 1. Set Java 17 Target
+**File:** `android/app/build.gradle`
+- Kept `sourceCompatibility` and `targetCompatibility` as Java 17 (required by ultralytics_yolo)
+- Kept `kotlinOptions.jvmTarget` as "17"
 
-### Step 4: Verify Installation
+### 2. Added Gradle Java Home Configuration
+**File:** `android/gradle.properties`
+- Added `org.gradle.java.home` configuration placeholder
+- You need to uncomment and set this to your Java 21 path
 
-Open a **NEW** terminal/PowerShell window and run:
+### 3. Disabled Auto-Download
+**File:** `android/gradle.properties`
+- Set `org.gradle.java.installations.auto-download=false` to avoid SSL errors
+- Kept `org.gradle.java.installations.auto-detect=true` for backup detection
+
+## Verification Steps
+
+After configuring, verify your setup:
 
 ```powershell
-# Check JAVA_HOME
-echo $env:JAVA_HOME
-
-# Check Java version
+# 1. Check Java version
 java -version
+# Should show: openjdk 21.0.9
 
-# Check Gradle can find it
+# 2. Navigate to project
 cd wheel_inspector
-.\gradlew.bat --version
-```
 
-## Alternative: Quick Test Without Setting JAVA_HOME
+# 3. Clean previous build
+flutter clean
 
-If you don't want to set environment variables permanently, you can test with:
+# 4. Get dependencies
+flutter pub get
 
-```powershell
-$env:JAVA_HOME="C:\Program Files\Java\jdk-21"  # Adjust path
-cd wheel_inspector
+# 5. Try building
 flutter build apk --release
 ```
 
 ## Troubleshooting
 
+### "Cannot find a Java installation"
+- **Fix:** Set `org.gradle.java.home` in `android/gradle.properties` (see Option 1 above)
+- Make sure you use double backslashes: `C:\\Program Files\\...`
+- Remove any trailing backslash from the path
+
 ### "Could not find tools.jar"
-- Make sure `JAVA_HOME` points to the JDK, not JRE
-- The path should contain folders like `bin`, `lib`, `include`
+- Make sure the path points to JDK (not JRE)
+- The directory should contain: `bin/`, `lib/`, `include/`
 
 ### Still getting SSL errors
-- Make sure `auto-download=false` in `android/gradle.properties`
-- Clear Gradle cache: `.\gradlew.bat clean`
+- Verify `org.gradle.java.installations.auto-download=false` in `gradle.properties`
+- Make sure you've set `org.gradle.java.home` so Gradle doesn't try to download
 
-### "Gradle cannot find Java"
-1. Verify `JAVA_HOME` is set correctly
-2. Restart your terminal
-3. Run `java -version` to confirm Java 21 is accessible
+### Path with spaces not working
+- Always use double backslashes: `C:\\Program Files\\Java\\jdk-21`
+- Don't use quotes in gradle.properties
 
-## Next Steps
+## Example Configuration
 
-After setting `JAVA_HOME`, try building:
-```bash
-cd wheel_inspector
-flutter build apk --release
+Your `android/gradle.properties` should look like this:
+
+```properties
+org.gradle.jvmargs=-Xmx4G -XX:MaxMetaspaceSize=2G -XX:+HeapDumpOnOutOfMemoryError
+android.useAndroidX=true
+android.enableJetifier=true
+
+# Java Configuration
+# Set this to your Java 21 installation path with double backslashes
+org.gradle.java.home=C:\\Program Files\\Microsoft\\jdk-21.0.9.10-hotspot
+
+# Enable Java toolchain auto-detection
+org.gradle.java.installations.auto-detect=true
+org.gradle.java.installations.auto-download=false
 ```
