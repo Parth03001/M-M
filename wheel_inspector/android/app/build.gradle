@@ -12,13 +12,13 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        // ultralytics_yolo requires Java 17
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        // ultralytics_yolo requires Java 17+, using Java 21
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "21"
     }
 
     defaultConfig {
