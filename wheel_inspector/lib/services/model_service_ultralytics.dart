@@ -10,7 +10,7 @@ class ModelServiceUltralytics implements ModelService {
   YOLO? _yolo;
   List<String> _labels = [];
   List<String> _loadModelLogs = [];
-  static const double confThreshold = 0.4; // Increased from 0.25 to get more precise detections
+  static const double confThreshold = 0.65; // Increased to 0.65 to get tighter, more accurate boxes
 
   @override
   bool get isLoaded => _yolo != null;
@@ -134,7 +134,7 @@ class ModelServiceUltralytics implements ModelService {
       final Map<String, dynamic> results = await _yolo!.predict(
         imageBytes,
         confidenceThreshold: confThreshold,
-        iouThreshold: 0.45,
+        iouThreshold: 0.3, // Stricter NMS to filter overlapping boxes
       );
 
       addLog('✅ YOLO inference completed');
