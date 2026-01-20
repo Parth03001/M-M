@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import '../services/model_manager.dart';
 import '../models/detection_result.dart';
-import 'dart:math' as math;
+import 'package:image/image.dart' as img;
 
 class WheelDetectionScreen extends StatefulWidget {
   const WheelDetectionScreen({super.key});
@@ -24,7 +24,7 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
   bool _showDebug = false;
   double? _imageDisplayWidth;
   double? _imageDisplayHeight;
-  ({int width, int height})? _decodedImageSize;
+  img.Image? _decodedImage;
 
   final ModelManager _modelManager = ModelManager();
 
@@ -98,7 +98,7 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
       _debugLogs = [];
       _imageDisplayWidth = null;
       _imageDisplayHeight = null;
-      _decodedImageSize = null;
+      _decodedImage = null;
     });
 
     try {
@@ -106,8 +106,8 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
       final XFile imageFile = await _cameraController!.takePicture();
       final imageBytes = await imageFile.readAsBytes();
 
-      // Get image dimensions
-      _decodedImageSize = _decodeImageSync(imageBytes);
+      // Decode image for dimensions
+      _decodedImage = img.decodeImage(imageBytes);
 
       setState(() {
         _capturedImageBytes = imageBytes;
@@ -256,7 +256,7 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
       _debugLogs = [];
       _imageDisplayWidth = null;
       _imageDisplayHeight = null;
-      _decodedImageSize = null;
+      _decodedImage = null;
     });
   }
 
@@ -700,55 +700,53 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
   }
 
   Widget _buildImageWithBoxes() {
-    if (_capturedImageBytes == null || _decodedImageSize == null) {
+    if (_capturedImageBytes == null) {
       return Image.memory(_capturedImageBytes!, fit: BoxFit.contain);
     }
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Calculate display size maintaining aspect ratio
-        final imageWidth = _decodedImageSize!.width.toDouble();
-        final imageHeight = _decodedImageSize!.height.toDouble();
+        // Calculate display size maintaining aspect ratio (same as classifier_app)
+        if (_decodedImage != null) {
+          final imageWidth = _decodedImage!.width.toDouble();
+          final imageHeight = _decodedImage!.height.toDouble();
+          final maxWidth = constraints.maxWidth * 0.9;
+          final maxHeight = constraints.maxHeight * 0.7;
 
-        // Use full available space
-        final maxWidth = constraints.maxWidth;
-        final maxHeight = constraints.maxHeight;
+          final scale = (maxWidth / imageWidth < maxHeight / imageHeight)
+              ? maxWidth / imageWidth
+              : maxHeight / imageHeight;
 
-        // Calculate scale to fit image in available space
-        final scale = (maxWidth / imageWidth < maxHeight / imageHeight)
-            ? maxWidth / imageWidth
-            : maxHeight / imageHeight;
-
-        // Update display dimensions if needed
-        if (_imageDisplayWidth == null || _imageDisplayHeight == null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            setState(() {
-              _imageDisplayWidth = imageWidth * scale;
-              _imageDisplayHeight = imageHeight * scale;
+          if (_imageDisplayWidth == null || _imageDisplayHeight == null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              setState(() {
+                _imageDisplayWidth = imageWidth * scale;
+                _imageDisplayHeight = imageHeight * scale;
+              });
             });
-          });
+          }
         }
 
         return Center(
-          child: Container(
-            width: _imageDisplayWidth,
-            height: _imageDisplayHeight,
-            child: Stack(
-              children: [
-                // Display image
-                Image.memory(
-                  _capturedImageBytes!,
-                  fit: BoxFit.contain,
+          child: Stack(
+            children: [
+              // Display image (same structure as classifier_app)
+              if (_imageDisplayWidth != null && _imageDisplayHeight != null)
+                Container(
                   width: _imageDisplayWidth,
                   height: _imageDisplayHeight,
+                  child: Image.memory(
+                    _capturedImageBytes!,
+                    fit: BoxFit.contain,
+                  ),
                 ),
-                // Bounding boxes overlay
-                if (_detectionResult != null &&
-                    _imageDisplayWidth != null &&
-                    _imageDisplayHeight != null)
-                  ..._buildBoundingBoxes(),
-              ],
-            ),
+              // Bounding boxes overlay
+              if (_detectionResult != null &&
+                  _imageDisplayWidth != null &&
+                  _imageDisplayHeight != null &&
+                  _decodedImage != null)
+                ..._buildBoundingBoxes(),
+            ],
           ),
         );
       },
@@ -759,36 +757,29 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
     if (_detectionResult == null ||
         _imageDisplayWidth == null ||
         _imageDisplayHeight == null ||
-        _decodedImageSize == null) {
+        _decodedImage == null ||
+        _capturedImageBytes == null) {
       return [];
     }
 
-    // Original image dimensions
-    final imageWidth = _decodedImageSize!.width.toDouble();
-    final imageHeight = _decodedImageSize!.height.toDouble();
+    // Calculate scale - account for BoxFit.contain (SAME AS CLASSIFIER_APP)
+    final imageAspectRatio = _decodedImage!.width / _decodedImage!.height;
+    final containerAspectRatio = _imageDisplayWidth! / _imageDisplayHeight!;
 
-    // Calculate scale - BoxFit.contain scales uniformly
-    final imageAspectRatio = imageWidth / imageHeight;
-    final displayAspectRatio = _imageDisplayWidth! / _imageDisplayHeight!;
+    double scaleX, scaleY, offsetX, offsetY;
 
-    double scale;
-    double offsetX = 0;
-    double offsetY = 0;
-
-    if (imageAspectRatio > displayAspectRatio) {
+    if (imageAspectRatio > containerAspectRatio) {
       // Image is wider - fit to width
-      scale = _imageDisplayWidth! / imageWidth;
-      // Image height after scaling
-      final scaledHeight = imageHeight * scale;
-      // Center vertically
-      offsetY = (_imageDisplayHeight! - scaledHeight) / 2;
+      scaleX = _imageDisplayWidth! / _decodedImage!.width;
+      scaleY = scaleX;
+      offsetX = 0;
+      offsetY = (_imageDisplayHeight! - (_decodedImage!.height * scaleY)) / 2;
     } else {
-      // Image is taller or same - fit to height
-      scale = _imageDisplayHeight! / imageHeight;
-      // Image width after scaling
-      final scaledWidth = imageWidth * scale;
-      // Center horizontally
-      offsetX = (_imageDisplayWidth! - scaledWidth) / 2;
+      // Image is taller - fit to height
+      scaleY = _imageDisplayHeight! / _decodedImage!.height;
+      scaleX = scaleY;
+      offsetX = (_imageDisplayWidth! - (_decodedImage!.width * scaleX)) / 2;
+      offsetY = 0;
     }
 
     return _detectionResult!.boxes.map((box) {
@@ -802,11 +793,11 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
         color = Colors.orange; // Unknown
       }
 
-      // Scale bounding box coordinates to display size
-      final x1 = (box.x1 * scale) + offsetX;
-      final y1 = (box.y1 * scale) + offsetY;
-      final x2 = (box.x2 * scale) + offsetX;
-      final y2 = (box.y2 * scale) + offsetY;
+      // Scale and offset bounding box coordinates (SAME AS CLASSIFIER_APP)
+      final x1 = (box.x1 * scaleX) + offsetX;
+      final y1 = (box.y1 * scaleY) + offsetY;
+      final x2 = (box.x2 * scaleX) + offsetX;
+      final y2 = (box.y2 * scaleY) + offsetY;
 
       final width = x2 - x1;
       final height = y2 - y1;
@@ -861,33 +852,4 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
     }).toList();
   }
 
-  // Synchronous image decoder helper
-  ({int width, int height})? _decodeImageSync(Uint8List bytes) {
-    try {
-      if (bytes.length > 24 && bytes[0] == 0xFF && bytes[1] == 0xD8) {
-        // JPEG
-        int pos = 2;
-        while (pos < bytes.length - 8) {
-          if (bytes[pos] == 0xFF) {
-            if (bytes[pos + 1] == 0xC0 || bytes[pos + 1] == 0xC2) {
-              final height = (bytes[pos + 5] << 8) | bytes[pos + 6];
-              final width = (bytes[pos + 7] << 8) | bytes[pos + 8];
-              return (width: width, height: height);
-            }
-            pos += 2 + ((bytes[pos + 2] << 8) | bytes[pos + 3]);
-          } else {
-            pos++;
-          }
-        }
-      } else if (bytes.length > 24 && bytes[0] == 0x89 && bytes[1] == 0x50) {
-        // PNG
-        final width = (bytes[16] << 24) | (bytes[17] << 16) | (bytes[18] << 8) | bytes[19];
-        final height = (bytes[20] << 24) | (bytes[21] << 16) | (bytes[22] << 8) | bytes[23];
-        return (width: width, height: height);
-      }
-    } catch (e) {
-      print('Error decoding image dimensions: $e');
-    }
-    return null;
-  }
 }
