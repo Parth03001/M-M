@@ -223,20 +223,20 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
 
     // Check combinations
     if (detectedClasses.contains(0) && detectedClasses.contains(1)) {
-      // rim_black (0) + cap_black (1) = Good Combination
-      _resultMessage = '✓ Good Combination\nAX7 (Black Rim + Black Cap)';
-      _resultColor = Colors.green;
-    } else if (detectedClasses.contains(2) && detectedClasses.contains(3)) {
-      // rim_grey (2) + cap_grey (3) = Good Combination
-      _resultMessage = '✓ Good Combination\nAX7L (Grey Rim + Grey Cap)';
+      // rim_black (0) + cap_black (1) = AX7 OK
+      _resultMessage = 'AX7 OK';
       _resultColor = Colors.green;
     } else if (detectedClasses.contains(0) && detectedClasses.contains(3)) {
-      // rim_black (0) + cap_grey (3) = Bad Combination
-      _resultMessage = '✗ Bad Combination\nBlack Rim + Grey Cap';
+      // rim_black (0) + cap_grey (3) = AX7 NOT OK
+      _resultMessage = 'AX7 NOT OK';
       _resultColor = Colors.red;
+    } else if (detectedClasses.contains(2) && detectedClasses.contains(3)) {
+      // rim_grey (2) + cap_grey (3) = AX7L OK
+      _resultMessage = 'AX7L OK';
+      _resultColor = Colors.green;
     } else if (detectedClasses.contains(2) && detectedClasses.contains(1)) {
-      // rim_grey (2) + cap_black (1) = Bad Combination
-      _resultMessage = '✗ Bad Combination\nGrey Rim + Black Cap';
+      // rim_grey (2) + cap_black (1) = AX7L NOT OK
+      _resultMessage = 'AX7L NOT OK';
       _resultColor = Colors.red;
     } else {
       // Incomplete detection or unexpected combination
