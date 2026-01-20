@@ -811,41 +811,9 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
           decoration: BoxDecoration(
             border: Border.all(
               color: color,
-              width: 3.0,
+              width: 4.5, // Thicker border
             ),
-            color: color.withOpacity(0.1),
-          ),
-          child: Stack(
-            children: [
-              // Label at top
-              Positioned(
-                top: 0,
-                left: 0,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.9),
-                    borderRadius: BorderRadius.only(
-                      bottomRight: Radius.circular(8),
-                    ),
-                  ),
-                  child: Text(
-                    '${box.className} ${(box.confidence * 100).toStringAsFixed(0)}%',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withOpacity(0.5),
-                          blurRadius: 2,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            color: color.withOpacity(0.05), // More transparent fill
           ),
         ),
       );
