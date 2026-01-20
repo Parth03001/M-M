@@ -210,37 +210,37 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
       return;
     }
 
-    // Group detections by classId
-    Set<int> detectedClasses = result.boxes.map((box) => box.classId).toSet();
+    // Group detections by className (not classId, since model class order may vary)
+    Set<String> detectedClasses = result.boxes.map((box) => box.className).toSet();
 
-    print('Detected classes: $detectedClasses');
+    print('Detected class names: $detectedClasses');
+    print('Detected class IDs: ${result.boxes.map((box) => box.classId).toSet()}');
 
-    // Class mapping:
-    // 0 = rim_black
-    // 1 = cap_black
-    // 2 = rim_grey
-    // 3 = cap_grey
+    // Check combinations based on class names
+    bool hasRimBlack = detectedClasses.contains('rim_black');
+    bool hasRimGrey = detectedClasses.contains('rim_grey');
+    bool hasCapBlack = detectedClasses.contains('cap_black');
+    bool hasCapGrey = detectedClasses.contains('cap_grey');
 
-    // Check combinations
-    if (detectedClasses.contains(0) && detectedClasses.contains(1)) {
-      // rim_black (0) + cap_black (1) = AX7 OK
+    if (hasRimBlack && hasCapBlack) {
+      // rim_black + cap_black = AX7 OK
       _resultMessage = 'AX7 OK';
       _resultColor = Colors.green;
-    } else if (detectedClasses.contains(0) && detectedClasses.contains(3)) {
-      // rim_black (0) + cap_grey (3) = AX7 NOT OK
+    } else if (hasRimBlack && hasCapGrey) {
+      // rim_black + cap_grey = AX7 NOT OK
       _resultMessage = 'AX7 NOT OK';
       _resultColor = Colors.red;
-    } else if (detectedClasses.contains(2) && detectedClasses.contains(3)) {
-      // rim_grey (2) + cap_grey (3) = AX7L OK
+    } else if (hasRimGrey && hasCapGrey) {
+      // rim_grey + cap_grey = AX7L OK
       _resultMessage = 'AX7L OK';
       _resultColor = Colors.green;
-    } else if (detectedClasses.contains(2) && detectedClasses.contains(1)) {
-      // rim_grey (2) + cap_black (1) = AX7L NOT OK
+    } else if (hasRimGrey && hasCapBlack) {
+      // rim_grey + cap_black = AX7L NOT OK
       _resultMessage = 'AX7L NOT OK';
       _resultColor = Colors.red;
     } else {
       // Incomplete detection or unexpected combination
-      _resultMessage = 'Incomplete detection\nDetected: ${result.boxes.map((b) => b.className).join(", ")}';
+      _resultMessage = 'Incomplete detection\nDetected: ${detectedClasses.join(", ")}';
       _resultColor = Colors.orange;
     }
 

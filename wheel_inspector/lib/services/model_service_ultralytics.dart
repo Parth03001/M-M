@@ -10,7 +10,7 @@ class ModelServiceUltralytics implements ModelService {
   YOLO? _yolo;
   List<String> _labels = [];
   List<String> _loadModelLogs = [];
-  static const double confThreshold = 0.25;
+  static const double confThreshold = 0.4; // Increased from 0.25 to get more precise detections
 
   @override
   bool get isLoaded => _yolo != null;
