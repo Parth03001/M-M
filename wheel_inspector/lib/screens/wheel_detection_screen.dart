@@ -709,13 +709,17 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
         // Calculate display size maintaining aspect ratio
         final imageWidth = _decodedImageSize!.width.toDouble();
         final imageHeight = _decodedImageSize!.height.toDouble();
-        final maxWidth = constraints.maxWidth * 0.9;
-        final maxHeight = constraints.maxHeight * 0.8;
 
+        // Use full available space
+        final maxWidth = constraints.maxWidth;
+        final maxHeight = constraints.maxHeight;
+
+        // Calculate scale to fit image in available space
         final scale = (maxWidth / imageWidth < maxHeight / imageHeight)
             ? maxWidth / imageWidth
             : maxHeight / imageHeight;
 
+        // Update display dimensions if needed
         if (_imageDisplayWidth == null || _imageDisplayHeight == null) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             setState(() {
@@ -726,24 +730,25 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
         }
 
         return Center(
-          child: Stack(
-            children: [
-              // Display image
-              if (_imageDisplayWidth != null && _imageDisplayHeight != null)
-                Container(
+          child: Container(
+            width: _imageDisplayWidth,
+            height: _imageDisplayHeight,
+            child: Stack(
+              children: [
+                // Display image
+                Image.memory(
+                  _capturedImageBytes!,
+                  fit: BoxFit.contain,
                   width: _imageDisplayWidth,
                   height: _imageDisplayHeight,
-                  child: Image.memory(
-                    _capturedImageBytes!,
-                    fit: BoxFit.contain,
-                  ),
                 ),
-              // Bounding boxes overlay
-              if (_detectionResult != null &&
-                  _imageDisplayWidth != null &&
-                  _imageDisplayHeight != null)
-                ..._buildBoundingBoxes(),
-            ],
+                // Bounding boxes overlay
+                if (_detectionResult != null &&
+                    _imageDisplayWidth != null &&
+                    _imageDisplayHeight != null)
+                  ..._buildBoundingBoxes(),
+              ],
+            ),
           ),
         );
       },
@@ -758,24 +763,32 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
       return [];
     }
 
-    // Calculate scale
-    final imageAspectRatio = _decodedImageSize!.width / _decodedImageSize!.height;
-    final containerAspectRatio = _imageDisplayWidth! / _imageDisplayHeight!;
+    // Original image dimensions
+    final imageWidth = _decodedImageSize!.width.toDouble();
+    final imageHeight = _decodedImageSize!.height.toDouble();
 
-    double scaleX, scaleY, offsetX, offsetY;
+    // Calculate scale - BoxFit.contain scales uniformly
+    final imageAspectRatio = imageWidth / imageHeight;
+    final displayAspectRatio = _imageDisplayWidth! / _imageDisplayHeight!;
 
-    if (imageAspectRatio > containerAspectRatio) {
+    double scale;
+    double offsetX = 0;
+    double offsetY = 0;
+
+    if (imageAspectRatio > displayAspectRatio) {
       // Image is wider - fit to width
-      scaleX = _imageDisplayWidth! / _decodedImageSize!.width;
-      scaleY = scaleX;
-      offsetX = 0;
-      offsetY = (_imageDisplayHeight! - (_decodedImageSize!.height * scaleY)) / 2;
+      scale = _imageDisplayWidth! / imageWidth;
+      // Image height after scaling
+      final scaledHeight = imageHeight * scale;
+      // Center vertically
+      offsetY = (_imageDisplayHeight! - scaledHeight) / 2;
     } else {
-      // Image is taller - fit to height
-      scaleY = _imageDisplayHeight! / _decodedImageSize!.height;
-      scaleX = scaleY;
-      offsetX = (_imageDisplayWidth! - (_decodedImageSize!.width * scaleX)) / 2;
-      offsetY = 0;
+      // Image is taller or same - fit to height
+      scale = _imageDisplayHeight! / imageHeight;
+      // Image width after scaling
+      final scaledWidth = imageWidth * scale;
+      // Center horizontally
+      offsetX = (_imageDisplayWidth! - scaledWidth) / 2;
     }
 
     return _detectionResult!.boxes.map((box) {
@@ -789,11 +802,11 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
         color = Colors.orange; // Unknown
       }
 
-      // Scale and offset bounding box coordinates
-      final x1 = (box.x1 * scaleX) + offsetX;
-      final y1 = (box.y1 * scaleY) + offsetY;
-      final x2 = (box.x2 * scaleX) + offsetX;
-      final y2 = (box.y2 * scaleY) + offsetY;
+      // Scale bounding box coordinates to display size
+      final x1 = (box.x1 * scale) + offsetX;
+      final y1 = (box.y1 * scale) + offsetY;
+      final x2 = (box.x2 * scale) + offsetX;
+      final y2 = (box.y2 * scale) + offsetY;
 
       final width = x2 - x1;
       final height = y2 - y1;
