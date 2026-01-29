@@ -2,6 +2,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import '../services/model_manager.dart';
+import '../services/model_service_impl.dart';
+import '../services/image_preprocessor.dart';
 import '../models/detection_result.dart';
 import 'dart:math' as math;
 
@@ -22,6 +24,7 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
   Color _resultColor = Colors.grey;
   List<String> _debugLogs = [];
   bool _showDebug = false;
+  Uint8List? _preprocessedImageBytes; // For showing preprocessed view
 
   final ModelManager _modelManager = ModelManager();
 
@@ -104,6 +107,16 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
         _capturedImageBytes = imageBytes;
       });
 
+      // Generate preprocessed preview for EfficientNet mode
+      if (_modelManager.currentType == ModelType.efficientnet) {
+        try {
+          final preprocessor = ImagePreprocessor();
+          _preprocessedImageBytes = preprocessor.preprocessForDisplay(imageBytes);
+        } catch (e) {
+          print('Preview generation failed: $e');
+        }
+      }
+
       // Run detection
       if (_modelManager.modelService != null) {
         final result = await _modelManager.modelService!.detectAndClassify(imageBytes);
@@ -136,7 +149,25 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
       return;
     }
 
-    // Group detections by classId
+    // Check if this is an EfficientNet classification (classId >= 10)
+    final firstBox = result.boxes.first;
+    if (firstBox.classId >= 10) {
+      // EfficientNet direct classification
+      final className = firstBox.className;
+      final confidence = (firstBox.confidence * 100).toStringAsFixed(1);
+
+      if (className.contains('OK') && !className.contains('NOT')) {
+        _resultMessage = '✓ $className\n($confidence% confidence)';
+        _resultColor = Colors.green;
+      } else {
+        _resultMessage = '✗ $className\n($confidence% confidence)';
+        _resultColor = Colors.red;
+      }
+      print('EfficientNet result: $className ($confidence%)');
+      return;
+    }
+
+    // YOLO detection mode - group detections by classId
     Set<int> detectedClasses = result.boxes.map((box) => box.classId).toSet();
 
     print('Detected classes: $detectedClasses');
@@ -149,23 +180,18 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
 
     // Check combinations
     if (detectedClasses.contains(0) && detectedClasses.contains(1)) {
-      // rim_black (0) + cap_black (1) = AX7 OK
       _resultMessage = '✓ AX7 OK';
       _resultColor = Colors.green;
     } else if (detectedClasses.contains(0) && detectedClasses.contains(2)) {
-      // rim_black (0) + rim_grey (2) = AX7 NOT OK
       _resultMessage = '✗ AX7 NOT OK';
       _resultColor = Colors.red;
     } else if (detectedClasses.contains(2) && detectedClasses.contains(3)) {
-      // rim_grey (2) + cap_grey (3) = AX7L OK
       _resultMessage = '✓ AX7L OK';
       _resultColor = Colors.green;
     } else if (detectedClasses.contains(2) && detectedClasses.contains(1)) {
-      // rim_grey (2) + cap_black (1) = AX7L NOT OK
       _resultMessage = '✗ AX7L NOT OK';
       _resultColor = Colors.red;
     } else {
-      // Incomplete detection or unexpected combination
       _resultMessage = 'Incomplete detection\nDetected: ${result.boxes.map((b) => b.className).join(", ")}';
       _resultColor = Colors.orange;
     }
@@ -176,6 +202,7 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
   void _retake() {
     setState(() {
       _capturedImageBytes = null;
+      _preprocessedImageBytes = null;
       _detectionResult = null;
       _resultMessage = '';
       _resultColor = Colors.grey;
@@ -196,6 +223,36 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
         title: const Text('Wheel Inspector'),
         backgroundColor: Colors.blue,
         actions: [
+          // Model switch toggle
+          TextButton.icon(
+            icon: Icon(
+              _modelManager.currentType == ModelType.efficientnet
+                  ? Icons.psychology
+                  : Icons.center_focus_strong,
+              color: Colors.white,
+            ),
+            label: Text(
+              _modelManager.currentType == ModelType.efficientnet ? 'EN' : 'YOLO',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            onPressed: () async {
+              final newType = _modelManager.currentType == ModelType.efficientnet
+                  ? ModelType.yolo
+                  : ModelType.efficientnet;
+              _retake();
+              setState(() {});
+              try {
+                await _modelManager.loadModel(type: newType);
+                setState(() {});
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to load ${newType.name} model: $e')),
+                  );
+                }
+              }
+            },
+          ),
           IconButton(
             icon: Icon(_showDebug ? Icons.bug_report : Icons.bug_report_outlined),
             onPressed: () {
@@ -241,23 +298,39 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
                       ),
                       if (_detectionResult != null) ...[
                         const SizedBox(height: 10),
-                        Text(
-                          'Detected: ${_detectionResult!.boxes.length} objects',
-                          style: const TextStyle(fontSize: 14, color: Colors.black54),
-                        ),
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 8,
-                          children: _detectionResult!.boxes.map((box) {
-                            return Chip(
-                              label: Text(
-                                '${box.className} (${(box.confidence * 100).toStringAsFixed(0)}%)',
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                              backgroundColor: Colors.blue.shade100,
-                            );
-                          }).toList(),
-                        ),
+                        if (_modelManager.currentType == ModelType.efficientnet) ...[
+                          Text(
+                            'Model: EfficientNet-B0 (classifier)',
+                            style: TextStyle(fontSize: 12, color: Colors.black45),
+                          ),
+                          if (_preprocessedImageBytes != null) ...[
+                            const SizedBox(height: 8),
+                            const Text('Preprocessed input:', style: TextStyle(fontSize: 11, color: Colors.black45)),
+                            const SizedBox(height: 4),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.memory(_preprocessedImageBytes!, width: 112, height: 112),
+                            ),
+                          ],
+                        ] else ...[
+                          Text(
+                            'Detected: ${_detectionResult!.boxes.length} objects',
+                            style: const TextStyle(fontSize: 14, color: Colors.black54),
+                          ),
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 8,
+                            children: _detectionResult!.boxes.map((box) {
+                              return Chip(
+                                label: Text(
+                                  '${box.className} (${(box.confidence * 100).toStringAsFixed(0)}%)',
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                backgroundColor: Colors.blue.shade100,
+                              );
+                            }).toList(),
+                          ),
+                        ],
                       ],
                     ],
                   ),

@@ -1,6 +1,15 @@
-// Ultralytics YOLO implementation - Official YOLO plugin
-import 'model_service_ultralytics.dart';
 import 'model_service.dart';
+import 'model_service_ultralytics.dart';
+import 'model_service_efficientnet.dart';
 
-/// Factory function to create the Ultralytics YOLO model service
-ModelService createModelService() => ModelServiceUltralytics();
+enum ModelType { yolo, efficientnet }
+
+/// Factory function to create the appropriate model service
+ModelService createModelService({ModelType type = ModelType.efficientnet}) {
+  switch (type) {
+    case ModelType.yolo:
+      return ModelServiceUltralytics();
+    case ModelType.efficientnet:
+      return ModelServiceEfficientNet();
+  }
+}
