@@ -42,7 +42,7 @@ class ModelServiceEfficientNet implements ModelService {
       final tempDir = await getTemporaryDirectory();
       final modelFile = File('${tempDir.path}/wheel_efficientnet.tflite');
       await modelFile.writeAsBytes(byteData.buffer.asUint8List());
-      _interpreter = Interpreter.fromFile(modelFile.path, options: options);
+      _interpreter = Interpreter.fromFile(modelFile, options: options);
 
       _isLoaded = true;
       print('✓ EfficientNet model loaded (${byteData.lengthInBytes ~/ 1024 ~/ 1024} MB)');
