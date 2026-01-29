@@ -49,6 +49,14 @@ android {
     }
 }
 
+configurations.all {
+    // Exclude old tensorflow-lite pulled by ultralytics_yolo — conflicts with
+    // litert (com.google.ai.edge.litert) pulled by tflite_flutter
+    exclude group: 'org.tensorflow', module: 'tensorflow-lite'
+    exclude group: 'org.tensorflow', module: 'tensorflow-lite-api'
+    exclude group: 'org.tensorflow', module: 'tensorflow-lite-gpu'
+}
+
 dependencies {
     // Using litert (Google's optimized TensorFlow Lite runtime)
 }
