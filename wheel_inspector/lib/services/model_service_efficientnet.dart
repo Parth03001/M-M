@@ -1,5 +1,8 @@
 import 'dart:typed_data';
 import 'dart:math' as math;
+import 'dart:io';
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models/detection_result.dart';
 import 'model_service.dart';
 import 'image_preprocessor.dart';
@@ -29,7 +32,18 @@ class ModelServiceEfficientNet implements ModelService {
   @override
   Future<void> loadModel() async {
     try {
-      _interpreter = await Interpreter.fromAsset('wheel_efficientnet.tflite');
+      // Try loading from native Android assets first
+      try {
+        _interpreter = await Interpreter.fromAsset('wheel_efficientnet.tflite');
+      } catch (_) {
+        // Fallback: copy from Flutter asset bundle to temp file, then load
+        print('fromAsset failed, trying file-based loading...');
+        final byteData = await rootBundle.load('assets/wheel_efficientnet.tflite');
+        final tempDir = await getTemporaryDirectory();
+        final modelFile = File('${tempDir.path}/wheel_efficientnet.tflite');
+        await modelFile.writeAsBytes(byteData.buffer.asUint8List());
+        _interpreter = Interpreter.fromFile(modelFile.path);
+      }
       _isLoaded = true;
       print('✓ EfficientNet model loaded');
     } catch (e) {
