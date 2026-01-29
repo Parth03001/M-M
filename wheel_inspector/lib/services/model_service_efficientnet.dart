@@ -32,20 +32,20 @@ class ModelServiceEfficientNet implements ModelService {
   @override
   Future<void> loadModel() async {
     try {
-      // Try loading from native Android assets first
-      try {
-        _interpreter = await Interpreter.fromAsset('wheel_efficientnet.tflite');
-      } catch (_) {
-        // Fallback: copy from Flutter asset bundle to temp file, then load
-        print('fromAsset failed, trying file-based loading...');
-        final byteData = await rootBundle.load('assets/wheel_efficientnet.tflite');
-        final tempDir = await getTemporaryDirectory();
-        final modelFile = File('${tempDir.path}/wheel_efficientnet.tflite');
-        await modelFile.writeAsBytes(byteData.buffer.asUint8List());
-        _interpreter = Interpreter.fromFile(modelFile.path);
-      }
+      // Disable XNNPACK delegate — can cause "Unable to create interpreter"
+      // with custom EfficientNet models
+      final options = InterpreterOptions()..threads = 2;
+
+      // Load model from Flutter asset bundle via temp file (most reliable)
+      print('Loading EfficientNet model...');
+      final byteData = await rootBundle.load('assets/wheel_efficientnet.tflite');
+      final tempDir = await getTemporaryDirectory();
+      final modelFile = File('${tempDir.path}/wheel_efficientnet.tflite');
+      await modelFile.writeAsBytes(byteData.buffer.asUint8List());
+      _interpreter = Interpreter.fromFile(modelFile.path, options: options);
+
       _isLoaded = true;
-      print('✓ EfficientNet model loaded');
+      print('✓ EfficientNet model loaded (${byteData.lengthInBytes ~/ 1024 ~/ 1024} MB)');
     } catch (e) {
       print('❌ Failed to load EfficientNet model: $e');
       rethrow;
