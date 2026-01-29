@@ -9,22 +9,30 @@ class ModelManager {
 
   ModelService? _modelService;
   bool _isLoading = false;
+  ModelType _currentType = ModelType.efficientnet;
 
   ModelService? get modelService => _modelService;
   bool get isLoaded => _modelService?.isLoaded ?? false;
   bool get isLoading => _isLoading;
+  ModelType get currentType => _currentType;
 
   /// Initialize and load the model
-  Future<void> loadModel() async {
-    if (_isLoading || isLoaded) {
-      return;
+  Future<void> loadModel({ModelType type = ModelType.efficientnet}) async {
+    if (_isLoading) return;
+
+    // If switching model type, dispose old one
+    if (isLoaded && _currentType != type) {
+      dispose();
     }
 
+    if (isLoaded) return;
+
     _isLoading = true;
+    _currentType = type;
     try {
-      _modelService = createModelService();
+      _modelService = createModelService(type: type);
       await _modelService!.loadModel();
-      print('✓ Model loaded successfully via ModelManager');
+      print('✓ Model loaded successfully via ModelManager (${type.name})');
     } catch (e) {
       print('❌ Error loading model via ModelManager: $e');
       rethrow;

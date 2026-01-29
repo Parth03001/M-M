@@ -12,6 +12,7 @@ dependencies:
 
   # ML & Image Processing
   ultralytics_yolo: ^0.1.43
+  tflite_flutter: ^0.11.0
   image: ^4.1.7
 
   # Camera
@@ -30,4 +31,5 @@ flutter:
 
   assets:
     - assets/wheel_model.tflite
+    - assets/wheel_efficientnet.tflite
     - assets/labels.txt
