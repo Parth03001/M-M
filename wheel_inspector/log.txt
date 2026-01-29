@@ -1,15 +1,17 @@
-Got dependencies!
-15 packages have newer versions incompatible with dependency constraints.
 Try `flutter pub outdated` for more information.
-Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 2608 bytes (99.8% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
+PS C:\Users\50014665\M-M\wheel_inspector> flutter build apk --release
 
 FAILURE: Build failed with an exception.
 
+* Where:
+Settings file 'C:\Users\50014665\M-M\wheel_inspector\android\settings.gradle' line: 20
+
 * What went wrong:
-Execution failed for task ':app:checkReleaseAarMetadata'.
-> A build operation failed.
-      Could not move temporary workspace (C:\Users\50014665\.gradle\caches\transforms-4\cac3b211c18266e9e639efa57bb27a98-98a674ed-5316-4bc5-8b60-c9225eb1c351) to immutable location (C:\Users\50014665\.gradle\caches\transforms-4\cac3b211c18266e9e639efa57bb27a98)
-   > Could not move temporary workspace (C:\Users\50014665\.gradle\caches\transforms-4\cac3b211c18266e9e639efa57bb27a98-98a674ed-5316-4bc5-8b60-c9225eb1c351) to immutable location (C:\Users\50014665\.gradle\caches\transforms-4\cac3b211c18266e9e639efa57bb27a98)
+Error resolving plugin [id: 'dev.flutter.flutter-plugin-loader', version: '1.0.0']
+> A problem occurred configuring project ':gradle'.
+   > A build operation failed.
+         Could not move temporary workspace (C:\Users\50014665\.gradle\caches\transforms-4\17894c1de161118e7452b2996be8f6bc-14faa034-fe69-4775-9e7c-0c0e361736ae) to immutable location (C:\Users\50014665\.gradle\caches\transforms-4\17894c1de161118e7452b2996be8f6bc)
+      > Could not move temporary workspace (C:\Users\50014665\.gradle\caches\transforms-4\17894c1de161118e7452b2996be8f6bc-14faa034-fe69-4775-9e7c-0c0e361736ae) to immutable location (C:\Users\50014665\.gradle\caches\transforms-4\17894c1de161118e7452b2996be8f6bc)
 
 * Try:
 > Run with --stacktrace option to get the stack trace.
@@ -17,7 +19,7 @@ Execution failed for task ':app:checkReleaseAarMetadata'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 1m 20s
-Running Gradle task 'assembleRelease'...                           82.5s
+BUILD FAILED in 17s
+Running Gradle task 'assembleRelease'...                           18.7s
 Gradle task assembleRelease failed with exit code 1
 PS C:\Users\50014665\M-M\wheel_inspector>
