@@ -1,77 +1,26 @@
-S C:\Users\50014665\M-M\wheel_inspector> flutter build apk --release
+PS C:\Users\50014665\M-M\wheel_inspector> flutter build apk --release
 Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 2608 bytes (99.8% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
+ERROR: Missing classes detected while running R8. Please add the missing classes or apply additional keep rules that are generated in C:\Users\50014665\M-M\wheel_inspector\build\app\outputs\mapping\release\missing_rules.txt.
+ERROR: R8: Missing class java.beans.BeanInfo (referenced from: java.util.Map org.yaml.snakeyaml.introspector.PropertyUtils.getPropertiesMap(java.lang.Class, org.yaml.snakeyaml.introspector.BeanAccess))
+Missing class java.beans.FeatureDescriptor (referenced from: java.util.Map org.yaml.snakeyaml.introspector.PropertyUtils.getPropertiesMap(java.lang.Class, org.yaml.snakeyaml.introspector.BeanAccess) and 1 other context)
+Missing class java.beans.IntrospectionException (referenced from: java.util.Map org.yaml.snakeyaml.introspector.PropertyUtils.getPropertiesMap(java.lang.Class, org.yaml.snakeyaml.introspector.BeanAccess))
+Missing class java.beans.Introspector (referenced from: java.util.Map org.yaml.snakeyaml.introspector.PropertyUtils.getPropertiesMap(java.lang.Class, org.yaml.snakeyaml.introspector.BeanAccess))
+Missing class java.beans.PropertyDescriptor (referenced from: java.beans.PropertyDescriptor org.yaml.snakeyaml.introspector.MethodProperty.property and 4 other contexts)
 
-FAILURE: Build completed with 2 failures.
+FAILURE: Build failed with an exception.
 
-1: Task failed with an exception.
------------
 * What went wrong:
-Execution failed for task ':app:checkReleaseDuplicateClasses'.
-> A failure occurred while executing com.android.build.gradle.internal.tasks.CheckDuplicatesRunnable
-   > Duplicate class org.tensorflow.lite.DataType found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.DataTypeUtils found in modules litert-1.4.0.aar -> jetified-litert-1.4.0-runtime (com.google.ai.edge.litert:litert:1.4.0) and tensorflow-lite-2.11.0.aar -> jetified-tensorflow-lite-2.11.0-runtime (org.tensorflow:tensorflow-lite:2.11.0)
-     Duplicate class org.tensorflow.lite.DataTypeUtils$1 found in modules litert-1.4.0.aar -> jetified-litert-1.4.0-runtime (com.google.ai.edge.litert:litert:1.4.0) and tensorflow-lite-2.11.0.aar -> jetified-tensorflow-lite-2.11.0-runtime (org.tensorflow:tensorflow-lite:2.11.0)
-     Duplicate class org.tensorflow.lite.Delegate found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.DelegateFactory found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.Interpreter found in modules litert-1.4.0.aar -> jetified-litert-1.4.0-runtime (com.google.ai.edge.litert:litert:1.4.0) and tensorflow-lite-2.11.0.aar -> jetified-tensorflow-lite-2.11.0-runtime (org.tensorflow:tensorflow-lite:2.11.0)
-     Duplicate class org.tensorflow.lite.Interpreter$Options found in modules litert-1.4.0.aar -> jetified-litert-1.4.0-runtime (com.google.ai.edge.litert:litert:1.4.0) and tensorflow-lite-2.11.0.aar -> jetified-tensorflow-lite-2.11.0-runtime (org.tensorflow:tensorflow-lite:2.11.0)
-     Duplicate class org.tensorflow.lite.InterpreterApi found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.InterpreterApi$Options found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.InterpreterApi$Options$TfLiteRuntime found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.InterpreterFactory found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.InterpreterFactoryApi found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.InterpreterFactoryImpl found in modules litert-1.4.0.aar -> jetified-litert-1.4.0-runtime (com.google.ai.edge.litert:litert:1.4.0) and tensorflow-lite-2.11.0.aar -> jetified-tensorflow-lite-2.11.0-runtime (org.tensorflow:tensorflow-lite:2.11.0)
-     Duplicate class org.tensorflow.lite.InterpreterImpl found in modules litert-1.4.0.aar -> jetified-litert-1.4.0-runtime (com.google.ai.edge.litert:litert:1.4.0) and tensorflow-lite-2.11.0.aar -> jetified-tensorflow-lite-2.11.0-runtime (org.tensorflow:tensorflow-lite:2.11.0)
-     Duplicate class org.tensorflow.lite.InterpreterImpl$Options found in modules litert-1.4.0.aar -> jetified-litert-1.4.0-runtime (com.google.ai.edge.litert:litert:1.4.0) and tensorflow-lite-2.11.0.aar -> jetified-tensorflow-lite-2.11.0-runtime (org.tensorflow:tensorflow-lite:2.11.0)
-     Duplicate class org.tensorflow.lite.NativeInterpreterWrapper found in modules litert-1.4.0.aar -> jetified-litert-1.4.0-runtime (com.google.ai.edge.litert:litert:1.4.0) and tensorflow-lite-2.11.0.aar -> jetified-tensorflow-lite-2.11.0-runtime (org.tensorflow:tensorflow-lite:2.11.0)
-     Duplicate class org.tensorflow.lite.NativeInterpreterWrapperExperimental found in modules litert-1.4.0.aar -> jetified-litert-1.4.0-runtime (com.google.ai.edge.litert:litert:1.4.0) and tensorflow-lite-2.11.0.aar -> jetified-tensorflow-lite-2.11.0-runtime (org.tensorflow:tensorflow-lite:2.11.0)
-     Duplicate class org.tensorflow.lite.NativeSignatureRunnerWrapper found in modules litert-1.4.0.aar -> jetified-litert-1.4.0-runtime (com.google.ai.edge.litert:litert:1.4.0) and tensorflow-lite-2.11.0.aar -> jetified-tensorflow-lite-2.11.0-runtime (org.tensorflow:tensorflow-lite:2.11.0)
-     Duplicate class org.tensorflow.lite.RuntimeFlavor found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.Tensor found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.Tensor$QuantizationParams found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.TensorFlowLite found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.TensorFlowLite$1 found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.TensorFlowLite$PossiblyAvailableRuntime found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.TensorFlowLite$RuntimeFromApplication found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.TensorFlowLite$RuntimeFromSystem found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.TensorImpl found in modules litert-1.4.0.aar -> jetified-litert-1.4.0-runtime (com.google.ai.edge.litert:litert:1.4.0) and tensorflow-lite-2.11.0.aar -> jetified-tensorflow-lite-2.11.0-runtime (org.tensorflow:tensorflow-lite:2.11.0)
-     Duplicate class org.tensorflow.lite.annotations.UsedByReflection found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.gpu.CompatibilityList found in modules litert-gpu-1.4.0.aar -> jetified-litert-gpu-1.4.0-runtime (com.google.ai.edge.litert:litert-gpu:1.4.0) and tensorflow-lite-gpu-2.11.0.aar -> jetified-tensorflow-lite-gpu-2.11.0-runtime (org.tensorflow:tensorflow-lite-gpu:2.11.0)
-     Duplicate class org.tensorflow.lite.gpu.GpuDelegate found in modules litert-gpu-1.4.0.aar -> jetified-litert-gpu-1.4.0-runtime (com.google.ai.edge.litert:litert-gpu:1.4.0) and tensorflow-lite-gpu-2.11.0.aar -> jetified-tensorflow-lite-gpu-2.11.0-runtime (org.tensorflow:tensorflow-lite-gpu:2.11.0)
-     Duplicate class org.tensorflow.lite.gpu.GpuDelegate$Options found in modules litert-gpu-1.4.0.aar -> jetified-litert-gpu-1.4.0-runtime (com.google.ai.edge.litert:litert-gpu:1.4.0) and tensorflow-lite-gpu-2.11.0.aar -> jetified-tensorflow-lite-gpu-2.11.0-runtime (org.tensorflow:tensorflow-lite-gpu:2.11.0)
-     Duplicate class org.tensorflow.lite.gpu.GpuDelegateNative found in modules litert-gpu-1.4.0.aar -> jetified-litert-gpu-1.4.0-runtime (com.google.ai.edge.litert:litert-gpu:1.4.0) and tensorflow-lite-gpu-2.11.0.aar -> jetified-tensorflow-lite-gpu-2.11.0-runtime (org.tensorflow:tensorflow-lite-gpu:2.11.0)
-     Duplicate class org.tensorflow.lite.nnapi.NnApiDelegate found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.nnapi.NnApiDelegate$Options found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.nnapi.NnApiDelegate$PrivateInterface found in modules litert-api-1.4.0.aar -> jetified-litert-api-1.4.0-runtime (com.google.ai.edge.litert:litert-api:1.4.0) and tensorflow-lite-api-2.11.0.aar -> jetified-tensorflow-lite-api-2.11.0-runtime (org.tensorflow:tensorflow-lite-api:2.11.0)
-     Duplicate class org.tensorflow.lite.nnapi.NnApiDelegateImpl found in modules litert-1.4.0.aar -> jetified-litert-1.4.0-runtime (com.google.ai.edge.litert:litert:1.4.0) and tensorflow-lite-2.11.0.aar -> jetified-tensorflow-lite-2.11.0-runtime (org.tensorflow:tensorflow-lite:2.11.0)
-
-     Go to the documentation to learn how to <a href="d.android.com/r/tools/classpath-sync-errors">Fix dependency resolution errors</a>.
+Execution failed for task ':app:minifyReleaseWithR8'.
+> A failure occurred while executing com.android.build.gradle.internal.tasks.R8Task$R8Runnable
+   > Compilation failed to complete
 
 * Try:
 > Run with --stacktrace option to get the stack trace.
 > Run with --info or --debug option to get more log output.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
-==============================================================================
 
-2: Task failed with an exception.
------------
-* What went wrong:
-Execution failed for task ':app:mergeReleaseNativeLibs'.
-> A failure occurred while executing com.android.build.gradle.internal.tasks.MergeNativeLibsTask$MergeNativeLibsTaskWorkAction
-   > 2 files found with path 'lib/arm64-v8a/libtensorflowlite_jni.so' from inputs:
-      - C:\Users\50014665\.gradle\caches\transforms-4\fff845ba1927f83057df37f5858a7002\transformed\jetified-tensorflow-lite-2.11.0\jni\arm64-v8a\libtensorflowlite_jni.so
-      - C:\Users\50014665\.gradle\caches\transforms-4\79e5020f3c539eeee0b18eb979d89a05\transformed\jetified-litert-1.4.0\jni\arm64-v8a\libtensorflowlite_jni.so
-     If you are using jniLibs and CMake IMPORTED targets, see
-     https://developer.android.com/r/tools/jniLibs-vs-imported-targets
-
-* Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
-> Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
-==============================================================================
-
-BUILD FAILED in 2m 48s
-Running Gradle task 'assembleRelease'...                          170.1s
+BUILD FAILED in 2m 21s
+Running Gradle task 'assembleRelease'...                          142.5s
 Gradle task assembleRelease failed with exit code 1
+PS C:\Users\50014665\M-M\wheel_inspector>
