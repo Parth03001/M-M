@@ -30,6 +30,6 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/wheel_model.tflite
+    - assets/wheel_yolov26.tflite
     - assets/wheel_efficientnet.tflite
     - assets/labels.txt
