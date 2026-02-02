@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import '../services/model_manager.dart';
 import '../services/model_service_impl.dart';
-import '../services/image_preprocessor.dart';
 import '../models/detection_result.dart';
-import 'dart:math' as math;
 
 class WheelDetectionScreen extends StatefulWidget {
   const WheelDetectionScreen({super.key});
@@ -143,36 +141,13 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
       return;
     }
 
-    final firstBox = result.boxes.first;
-    if (firstBox.classId >= 10) {
-      final className = firstBox.className;
-      if (className.contains('OK') && !className.contains('NOT')) {
-        _resultMessage = '✓ $className';
-        _resultColor = Colors.green;
-      } else {
-        _resultMessage = '✗ $className';
-        _resultColor = Colors.red;
-      }
-      return;
-    }
-
-    Set<int> detectedClasses = result.boxes.map((box) => box.classId).toSet();
-
-    if (detectedClasses.contains(0) && detectedClasses.contains(1)) {
-      _resultMessage = '✓ AX7 OK';
+    final className = result.boxes.first.className;
+    if (className.contains('OK') && !className.contains('NOT')) {
+      _resultMessage = '✓ $className';
       _resultColor = Colors.green;
-    } else if (detectedClasses.contains(0) && detectedClasses.contains(2)) {
-      _resultMessage = '✗ AX7 NOT OK';
-      _resultColor = Colors.red;
-    } else if (detectedClasses.contains(2) && detectedClasses.contains(3)) {
-      _resultMessage = '✓ AX7L OK';
-      _resultColor = Colors.green;
-    } else if (detectedClasses.contains(2) && detectedClasses.contains(1)) {
-      _resultMessage = '✗ AX7L NOT OK';
-      _resultColor = Colors.red;
     } else {
-      _resultMessage = 'Incomplete detection\nDetected: ${result.boxes.map((b) => b.className).join(", ")}';
-      _resultColor = Colors.orange;
+      _resultMessage = '✗ $className';
+      _resultColor = Colors.red;
     }
   }
 
@@ -430,7 +405,7 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
 
   Widget _buildCameraOrImageView() {
     if (_capturedImageBytes != null) {
-      return _buildImageWithBoxes();
+      return _buildCapturedImage();
     } else if (_isCameraInitialized && _cameraController != null) {
       return Stack(
         fit: StackFit.expand,
@@ -473,123 +448,12 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
     ];
   }
 
-  Widget _buildImageWithBoxes() {
-    if (_capturedImageBytes == null || _detectionResult == null) {
-      return Image.memory(_capturedImageBytes!, fit: BoxFit.cover, width: double.infinity, height: double.infinity);
-    }
-
-    final drawableBoxes = _detectionResult!.boxes.where((b) => b.classId < 10).toList();
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.memory(
-              _capturedImageBytes!,
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-            ),
-            if (drawableBoxes.isNotEmpty)
-              CustomPaint(
-                size: Size(constraints.maxWidth, constraints.maxHeight),
-                painter: BoundingBoxPainter(
-                  boxes: drawableBoxes,
-                  imageBytes: _capturedImageBytes!,
-                  fitMode: BoxFit.cover,
-                ),
-              ),
-          ],
-        );
-      },
+  Widget _buildCapturedImage() {
+    return Image.memory(
+      _capturedImageBytes!,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
     );
-  }
-}
-
-class BoundingBoxPainter extends CustomPainter {
-  final List<BoundingBox> boxes;
-  final Uint8List imageBytes;
-  final BoxFit fitMode;
-
-  BoundingBoxPainter({required this.boxes, required this.imageBytes, this.fitMode = BoxFit.contain});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final image = _decodeImageSync(imageBytes);
-    if (image == null) return;
-
-    final imageWidth = image.width.toDouble();
-    final imageHeight = image.height.toDouble();
-
-    final scaleX = size.width / imageWidth;
-    final scaleY = size.height / imageHeight;
-    final scale = fitMode == BoxFit.cover
-        ? math.max(scaleX, scaleY)
-        : math.min(scaleX, scaleY);
-
-    final scaledWidth = imageWidth * scale;
-    final scaledHeight = imageHeight * scale;
-
-    final offsetX = (size.width - scaledWidth) / 2;
-    final offsetY = (size.height - scaledHeight) / 2;
-
-    for (final box in boxes) {
-      final x1 = box.x1 * scale + offsetX;
-      final y1 = box.y1 * scale + offsetY;
-      final x2 = box.x2 * scale + offsetX;
-      final y2 = box.y2 * scale + offsetY;
-
-      Color boxColor = Colors.green;
-      if (box.className.contains('grey')) boxColor = Colors.blue;
-
-      final paint = Paint()
-        ..color = boxColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3;
-
-      canvas.drawRect(Rect.fromLTRB(x1, y1, x2, y2), paint);
-
-      final textSpan = TextSpan(
-        text: box.className,
-        style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-      );
-      final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr);
-      textPainter.layout();
-
-      final labelRect = Rect.fromLTWH(x1, y1 - textPainter.height - 4, textPainter.width + 8, textPainter.height + 4);
-      canvas.drawRect(labelRect, Paint()..color = boxColor.withOpacity(0.8));
-      textPainter.paint(canvas, Offset(x1 + 4, y1 - textPainter.height - 2));
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-
-  ({int width, int height})? _decodeImageSync(Uint8List bytes) {
-    try {
-      if (bytes.length > 24 && bytes[0] == 0xFF && bytes[1] == 0xD8) {
-        int pos = 2;
-        while (pos < bytes.length - 8) {
-          if (bytes[pos] == 0xFF) {
-            if (bytes[pos + 1] == 0xC0 || bytes[pos + 1] == 0xC2) {
-              final height = (bytes[pos + 5] << 8) | bytes[pos + 6];
-              final width = (bytes[pos + 7] << 8) | bytes[pos + 8];
-              return (width: width, height: height);
-            }
-            pos += 2 + ((bytes[pos + 2] << 8) | bytes[pos + 3]);
-          } else {
-            pos++;
-          }
-        }
-      } else if (bytes.length > 24 && bytes[0] == 0x89 && bytes[1] == 0x50) {
-        final width = (bytes[16] << 24) | (bytes[17] << 16) | (bytes[18] << 8) | bytes[19];
-        final height = (bytes[20] << 24) | (bytes[21] << 16) | (bytes[22] << 8) | bytes[23];
-        return (width: width, height: height);
-      }
-    } catch (e) {
-      print('Error decoding image dimensions: $e');
-    }
-    return null;
   }
 }
