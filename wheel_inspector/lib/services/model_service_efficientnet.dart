@@ -66,19 +66,28 @@ class ModelServiceEfficientNet implements ModelService {
     final logs = <String>[];
 
     try {
+      // Query actual model input/output shapes for debugging
+      final inputTensorInfo = _interpreter!.getInputTensor(0);
+      final outputTensorInfo = _interpreter!.getOutputTensor(0);
+      logs.add('Model input: ${inputTensorInfo.shape} ${inputTensorInfo.type}');
+      logs.add('Model output: ${outputTensorInfo.shape} ${outputTensorInfo.type}');
+
       // Step 1: Preprocess (center crop + CLAHE + resize + normalize)
       logs.add('Preprocessing: center crop (55%) + CLAHE + resize 224x224');
       final inputTensor = _preprocessor.preprocess(imageBytes);
       logs.add('✓ Preprocessing complete');
 
       // Step 2: Run inference
-      // Input shape: [1, 3, 224, 224], Output shape: [1, num_classes]
-      final inputShape = [1, 3, 224, 224];
-      final outputShape = [1, classNames.length];
+      // TFLite models use NHWC format: [1, 224, 224, 3]
+      final inputShape = inputTensorInfo.shape;
+      final outputShape = outputTensorInfo.shape;
 
-      // Reshape input for interpreter
+      // Reshape input to match what the model actually expects
       final input = inputTensor.reshape(inputShape);
-      final output = List.filled(classNames.length, 0.0).reshape([1, classNames.length]);
+      final output = List.generate(
+        outputShape[0],
+        (_) => List.filled(outputShape[1], 0.0),
+      );
 
       _interpreter!.run(input, output);
 

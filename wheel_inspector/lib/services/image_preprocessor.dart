@@ -17,7 +17,7 @@ class ImagePreprocessor {
   });
 
   /// Full preprocessing pipeline: crop -> CLAHE -> resize -> normalize to float32 tensor
-  /// Returns [1, 3, 224, 224] float32 buffer (NCHW format for EfficientNet)
+  /// Returns [1, 224, 224, 3] float32 buffer (NHWC format for TFLite EfficientNet)
   Float32List preprocess(Uint8List imageBytes) {
     var image = img.decodeImage(imageBytes);
     if (image == null) throw Exception('Failed to decode image');
@@ -128,23 +128,22 @@ class ImagePreprocessor {
     return result;
   }
 
-  /// Convert image to [1, 3, 224, 224] float32 tensor with ImageNet normalization
+  /// Convert image to [1, 224, 224, 3] float32 tensor with ImageNet normalization
   Float32List _toNormalizedTensor(img.Image image) {
     const mean = [0.485, 0.456, 0.406];
     const std = [0.229, 0.224, 0.225];
 
-    final tensor = Float32List(1 * 3 * targetSize * targetSize);
-    final channelSize = targetSize * targetSize;
+    final tensor = Float32List(1 * targetSize * targetSize * 3);
+    int offset = 0;
 
     for (int y = 0; y < targetSize; y++) {
       for (int x = 0; x < targetSize; x++) {
         final pixel = image.getPixel(x, y);
-        final idx = y * targetSize + x;
 
-        // NCHW format: [batch, channel, height, width]
-        tensor[0 * channelSize + idx] = (pixel.r / 255.0 - mean[0]) / std[0]; // R
-        tensor[1 * channelSize + idx] = (pixel.g / 255.0 - mean[1]) / std[1]; // G
-        tensor[2 * channelSize + idx] = (pixel.b / 255.0 - mean[2]) / std[2]; // B
+        // NHWC format: [batch, height, width, channel] — standard for TFLite
+        tensor[offset++] = (pixel.r / 255.0 - mean[0]) / std[0]; // R
+        tensor[offset++] = (pixel.g / 255.0 - mean[1]) / std[1]; // G
+        tensor[offset++] = (pixel.b / 255.0 - mean[2]) / std[2]; // B
       }
     }
 
