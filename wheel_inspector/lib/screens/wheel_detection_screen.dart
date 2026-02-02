@@ -142,7 +142,7 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
     }
 
     final confidence = result.boxes.first.confidence;
-    if (confidence < 0.50) {
+    if (confidence < 0.25) {
       _resultMessage = '';
       _resultColor = Colors.grey;
       // Show low-confidence dialog after frame renders
