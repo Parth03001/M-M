@@ -20,8 +20,8 @@ class ModelManager {
   Future<void> loadModel({ModelType type = ModelType.efficientnet}) async {
     if (_isLoading) return;
 
-    // If switching model type, dispose old one
-    if (isLoaded && _currentType != type) {
+    // If switching model variant, dispose old one
+    if (_currentType != type) {
       dispose();
     }
 

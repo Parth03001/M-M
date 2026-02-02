@@ -32,4 +32,6 @@ flutter:
   assets:
     - assets/wheel_yolov26.tflite
     - assets/wheel_efficientnet.tflite
+    - assets/wheel_efficientnet_AUG.tflite
+    - assets/wheel_efficientnet_CROP.tflite
     - assets/labels.txt

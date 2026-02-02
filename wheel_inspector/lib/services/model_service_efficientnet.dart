@@ -16,7 +16,16 @@ import 'package:tflite_flutter/tflite_flutter.dart';
 class ModelServiceEfficientNet implements ModelService {
   Interpreter? _interpreter;
   bool _isLoaded = false;
-  final ImagePreprocessor _preprocessor = ImagePreprocessor();
+  final String assetPath;
+  final double cropRatio;
+  late final ImagePreprocessor _preprocessor;
+
+  ModelServiceEfficientNet({
+    this.assetPath = 'assets/wheel_efficientnet.tflite',
+    this.cropRatio = 0.55,
+  }) {
+    _preprocessor = ImagePreprocessor(cropRatio: cropRatio);
+  }
 
   // Class names matching training order
   static const List<String> classNames = [
@@ -37,10 +46,11 @@ class ModelServiceEfficientNet implements ModelService {
       final options = InterpreterOptions()..threads = 2;
 
       // Load model from Flutter asset bundle via temp file (most reliable)
-      print('Loading EfficientNet model...');
-      final byteData = await rootBundle.load('assets/wheel_efficientnet.tflite');
+      final fileName = assetPath.split('/').last;
+      print('Loading EfficientNet model ($fileName, crop ${(cropRatio * 100).toInt()}%)...');
+      final byteData = await rootBundle.load(assetPath);
       final tempDir = await getTemporaryDirectory();
-      final modelFile = File('${tempDir.path}/wheel_efficientnet.tflite');
+      final modelFile = File('${tempDir.path}/$fileName');
       await modelFile.writeAsBytes(byteData.buffer.asUint8List());
       _interpreter = Interpreter.fromFile(modelFile, options: options);
 
@@ -73,7 +83,7 @@ class ModelServiceEfficientNet implements ModelService {
       logs.add('Model output: ${outputTensorInfo.shape} ${outputTensorInfo.type}');
 
       // Step 1: Preprocess (center crop + CLAHE + resize + normalize)
-      logs.add('Preprocessing: center crop (55%) + CLAHE + resize 224x224');
+      logs.add('Preprocessing: center crop (${(cropRatio * 100).toInt()}%) + CLAHE + resize 224x224');
       final inputTensor = _preprocessor.preprocess(imageBytes);
       logs.add('✓ Preprocessing complete');
 

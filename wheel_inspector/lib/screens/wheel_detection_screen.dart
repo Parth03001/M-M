@@ -24,7 +24,7 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
   Color _resultColor = Colors.grey;
   List<String> _debugLogs = [];
   bool _showDebug = false;
-  Uint8List? _preprocessedImageBytes; // For showing preprocessed view
+  ModelType _selectedModelType = ModelType.efficientnet;
 
   final ModelManager _modelManager = ModelManager();
 
@@ -36,11 +36,8 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
 
   Future<void> _initializeApp() async {
     try {
-      // Load model first
-      await _modelManager.loadModel();
+      await _modelManager.loadModel(type: _selectedModelType);
       print('✓ Model loaded successfully');
-
-      // Initialize camera
       await _initializeCamera();
     } catch (e) {
       print('❌ Error initializing app: $e');
@@ -55,11 +52,8 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
   Future<void> _initializeCamera() async {
     try {
       final cameras = await availableCameras();
-      if (cameras.isEmpty) {
-        throw Exception('No cameras available');
-      }
+      if (cameras.isEmpty) throw Exception('No cameras available');
 
-      // Use back camera
       final backCamera = cameras.firstWhere(
         (camera) => camera.lensDirection == CameraLensDirection.back,
         orElse: () => cameras.first,
@@ -74,13 +68,29 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
       await _cameraController!.initialize();
 
       if (mounted) {
-        setState(() {
-          _isCameraInitialized = true;
-        });
+        setState(() => _isCameraInitialized = true);
       }
     } catch (e) {
       print('❌ Error initializing camera: $e');
       rethrow;
+    }
+  }
+
+  Future<void> _switchModel(ModelType type) async {
+    if (type == _selectedModelType && _modelManager.isLoaded) return;
+    _retake();
+    setState(() {
+      _selectedModelType = type;
+    });
+    try {
+      await _modelManager.loadModel(type: type);
+      setState(() {});
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load model: $e')),
+        );
+      }
     }
   }
 
@@ -99,25 +109,11 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
     });
 
     try {
-      // Capture image
       final XFile imageFile = await _cameraController!.takePicture();
       final imageBytes = await imageFile.readAsBytes();
 
-      setState(() {
-        _capturedImageBytes = imageBytes;
-      });
+      setState(() => _capturedImageBytes = imageBytes);
 
-      // Generate preprocessed preview for EfficientNet mode
-      if (_modelManager.currentType == ModelType.efficientnet) {
-        try {
-          final preprocessor = ImagePreprocessor();
-          _preprocessedImageBytes = preprocessor.preprocessForDisplay(imageBytes);
-        } catch (e) {
-          print('Preview generation failed: $e');
-        }
-      }
-
-      // Run detection
       if (_modelManager.modelService != null) {
         final result = await _modelManager.modelService!.detectAndClassify(imageBytes);
 
@@ -136,9 +132,7 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
         _resultColor = Colors.red;
       });
     } finally {
-      setState(() {
-        _isAnalyzing = false;
-      });
+      setState(() => _isAnalyzing = false);
     }
   }
 
@@ -149,13 +143,9 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
       return;
     }
 
-    // Check if this is an EfficientNet classification (classId >= 10)
     final firstBox = result.boxes.first;
     if (firstBox.classId >= 10) {
-      // EfficientNet direct classification
       final className = firstBox.className;
-      final confidence = (firstBox.confidence * 100).toStringAsFixed(1);
-
       if (className.contains('OK') && !className.contains('NOT')) {
         _resultMessage = '✓ $className';
         _resultColor = Colors.green;
@@ -163,22 +153,11 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
         _resultMessage = '✗ $className';
         _resultColor = Colors.red;
       }
-      print('EfficientNet result: $className ($confidence%)');
       return;
     }
 
-    // YOLO detection mode - group detections by classId
     Set<int> detectedClasses = result.boxes.map((box) => box.classId).toSet();
 
-    print('Detected classes: $detectedClasses');
-
-    // Class mapping:
-    // 0 = rim_black
-    // 1 = cap_black
-    // 2 = rim_grey
-    // 3 = cap_grey
-
-    // Check combinations
     if (detectedClasses.contains(0) && detectedClasses.contains(1)) {
       _resultMessage = '✓ AX7 OK';
       _resultColor = Colors.green;
@@ -195,14 +174,11 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
       _resultMessage = 'Incomplete detection\nDetected: ${result.boxes.map((b) => b.className).join(", ")}';
       _resultColor = Colors.orange;
     }
-
-    print('Result: $_resultMessage');
   }
 
   void _retake() {
     setState(() {
       _capturedImageBytes = null;
-      _preprocessedImageBytes = null;
       _detectionResult = null;
       _resultMessage = '';
       _resultColor = Colors.grey;
@@ -219,57 +195,85 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF1A1A2E),
       appBar: AppBar(
-        title: const Text('Wheel Inspector'),
-        backgroundColor: Colors.blue,
+        title: const Text(
+          'Wheel Inspector',
+          style: TextStyle(fontWeight: FontWeight.w600, letterSpacing: 0.5),
+        ),
+        backgroundColor: const Color(0xFF16213E),
+        elevation: 0,
         actions: [
-          // Model switch toggle
-          TextButton.icon(
-            icon: Icon(
-              _modelManager.currentType == ModelType.efficientnet
-                  ? Icons.psychology
-                  : Icons.center_focus_strong,
-              color: Colors.white,
-            ),
-            label: Text(
-              _modelManager.currentType == ModelType.efficientnet ? 'EN' : 'YOLO',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-            onPressed: () async {
-              final newType = _modelManager.currentType == ModelType.efficientnet
-                  ? ModelType.yolo
-                  : ModelType.efficientnet;
-              _retake();
-              setState(() {});
-              try {
-                await _modelManager.loadModel(type: newType);
-                setState(() {});
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to load ${newType.name} model: $e')),
-                  );
-                }
-              }
-            },
-          ),
           IconButton(
-            icon: Icon(_showDebug ? Icons.bug_report : Icons.bug_report_outlined),
-            onPressed: () {
-              setState(() {
-                _showDebug = !_showDebug;
-              });
-            },
+            icon: Icon(
+              _showDebug ? Icons.bug_report : Icons.bug_report_outlined,
+              color: _showDebug ? Colors.amber : Colors.white70,
+            ),
+            onPressed: () => setState(() => _showDebug = !_showDebug),
             tooltip: 'Toggle Debug',
           ),
         ],
       ),
       body: Stack(
         children: [
-          // Main content
           Column(
             children: [
-              // Camera/Image display area
+              // Model selector bar
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF16213E),
+                  border: Border(
+                    bottom: BorderSide(color: Color(0xFF0F3460), width: 1),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.model_training, color: Colors.white70, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F3460),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<ModelType>(
+                            value: _selectedModelType,
+                            isExpanded: true,
+                            dropdownColor: const Color(0xFF16213E),
+                            style: const TextStyle(color: Colors.white, fontSize: 14),
+                            icon: const Icon(Icons.expand_more, color: Colors.white70),
+                            items: ModelType.values.map((type) {
+                              final config = modelConfigs[type]!;
+                              return DropdownMenuItem(
+                                value: type,
+                                child: Text(config.displayName),
+                              );
+                            }).toList(),
+                            onChanged: _isAnalyzing
+                                ? null
+                                : (type) {
+                                    if (type != null) _switchModel(type);
+                                  },
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (_modelManager.isLoading) ...[
+                      const SizedBox(width: 10),
+                      const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              // Camera / Image area
               Expanded(
                 child: Container(
                   color: Colors.black,
@@ -279,71 +283,53 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
                 ),
               ),
 
-              // Result display
+              // Result banner
               if (_resultMessage.isNotEmpty)
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  color: _resultColor.withOpacity(0.2),
-                  child: Column(
-                    children: [
-                      Text(
-                        _resultMessage,
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: _resultColor,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      if (_detectionResult != null && _modelManager.currentType != ModelType.efficientnet) ...[
-                        const SizedBox(height: 10),
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 8,
-                          children: _detectionResult!.boxes.map((box) {
-                            return Chip(
-                              label: Text(
-                                box.className,
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                              backgroundColor: Colors.blue.shade100,
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    ],
+                  padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+                  decoration: BoxDecoration(
+                    color: _resultColor.withOpacity(0.15),
+                    border: Border(
+                      top: BorderSide(color: _resultColor.withOpacity(0.4), width: 2),
+                    ),
+                  ),
+                  child: Text(
+                    _resultMessage,
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: _resultColor,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
 
               // Control buttons
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                color: const Color(0xFF1A1A2E),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    if (_capturedImageBytes != null) ...[
-                      // Retake button
-                      ElevatedButton.icon(
-                        onPressed: _isAnalyzing ? null : _retake,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Retake'),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                          backgroundColor: Colors.grey,
+                    if (_capturedImageBytes != null)
+                      Expanded(
+                        child: _buildButton(
+                          icon: Icons.refresh,
+                          label: 'Retake',
+                          color: const Color(0xFF535C68),
+                          onPressed: _isAnalyzing ? null : _retake,
                         ),
                       ),
-                      const SizedBox(width: 20),
-                    ],
-                    // Capture/Analyzing button
-                    ElevatedButton.icon(
-                      onPressed: (_isAnalyzing || _capturedImageBytes != null) ? null : _captureAndAnalyze,
-                      icon: Icon(_isAnalyzing ? Icons.hourglass_empty : Icons.camera),
-                      label: Text(_isAnalyzing ? 'Analyzing...' : 'Capture'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                        backgroundColor: Colors.blue,
-                        disabledBackgroundColor: Colors.blue.shade200,
+                    if (_capturedImageBytes != null)
+                      const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildButton(
+                        icon: _isAnalyzing ? Icons.hourglass_empty : Icons.camera_alt,
+                        label: _isAnalyzing ? 'Analyzing...' : 'Capture',
+                        color: const Color(0xFF0F3460),
+                        onPressed: (_isAnalyzing || _capturedImageBytes != null)
+                            ? null
+                            : _captureAndAnalyze,
                       ),
                     ),
                   ],
@@ -352,49 +338,54 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
             ],
           ),
 
-          // Debug panel overlay
+          // Debug overlay
           if (_showDebug && _debugLogs.isNotEmpty)
             Positioned(
               left: 0,
               right: 0,
               bottom: 0,
               child: Container(
-                height: 300,
-                color: Colors.black.withOpacity(0.9),
+                height: 280,
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.92),
+                  border: const Border(
+                    top: BorderSide(color: Colors.amber, width: 1),
+                  ),
+                ),
                 child: Column(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
-                      color: Colors.blue,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text(
                             'Debug Logs',
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              color: Colors.amber,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.close, color: Colors.white),
-                            onPressed: () {
-                              setState(() {
-                                _showDebug = false;
-                              });
-                            },
+                            icon: const Icon(Icons.close, color: Colors.white70, size: 20),
+                            onPressed: () => setState(() => _showDebug = false),
                           ),
                         ],
                       ),
                     ),
                     Expanded(
                       child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
                         itemCount: _debugLogs.length,
                         itemBuilder: (context, index) {
                           final log = _debugLogs[index];
-                          Color logColor = Colors.white;
-                          if (log.contains('✓')) logColor = Colors.green;
-                          if (log.contains('❌') || log.contains('⚠️')) logColor = Colors.orange;
+                          Color logColor = Colors.white70;
+                          if (log.contains('✓')) logColor = Colors.greenAccent;
+                          if (log.contains('❌') || log.contains('⚠️')) logColor = Colors.orangeAccent;
 
                           return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.only(bottom: 2),
                             child: Text(
                               log,
                               style: TextStyle(
@@ -416,105 +407,69 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
     );
   }
 
+  Widget _buildButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    VoidCallback? onPressed,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 20),
+      label: Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        backgroundColor: color,
+        disabledBackgroundColor: color.withOpacity(0.4),
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        elevation: 0,
+      ),
+    );
+  }
+
   Widget _buildCameraOrImageView() {
     if (_capturedImageBytes != null) {
-      // Show captured image with bounding boxes
       return _buildImageWithBoxes();
     } else if (_isCameraInitialized && _cameraController != null) {
-      // Show live camera preview
       return Stack(
+        fit: StackFit.expand,
         children: [
           CameraPreview(_cameraController!),
-          // Scanner overlay frame
           Center(
             child: Container(
-              width: 300,
-              height: 300,
+              width: 280,
+              height: 280,
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.red, width: 3),
-                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white24, width: 2),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Stack(
-                children: [
-                  // Corner brackets
-                  ..._buildCornerBrackets(),
-                ],
-              ),
+              child: Stack(children: _buildCornerBrackets()),
             ),
           ),
         ],
       );
     } else {
-      // Loading state
-      return const CircularProgressIndicator(color: Colors.white);
+      return const Center(
+        child: CircularProgressIndicator(color: Colors.white70),
+      );
     }
   }
 
   List<Widget> _buildCornerBrackets() {
-    const double bracketSize = 30;
+    const double bracketSize = 28;
     const double bracketWidth = 3;
+    const color = Colors.white;
 
     return [
-      // Top-left
-      Positioned(
-        top: 0,
-        left: 0,
-        child: Container(
-          width: bracketSize,
-          height: bracketSize,
-          decoration: const BoxDecoration(
-            border: Border(
-              top: BorderSide(color: Colors.red, width: bracketWidth),
-              left: BorderSide(color: Colors.red, width: bracketWidth),
-            ),
-          ),
-        ),
-      ),
-      // Top-right
-      Positioned(
-        top: 0,
-        right: 0,
-        child: Container(
-          width: bracketSize,
-          height: bracketSize,
-          decoration: const BoxDecoration(
-            border: Border(
-              top: BorderSide(color: Colors.red, width: bracketWidth),
-              right: BorderSide(color: Colors.red, width: bracketWidth),
-            ),
-          ),
-        ),
-      ),
-      // Bottom-left
-      Positioned(
-        bottom: 0,
-        left: 0,
-        child: Container(
-          width: bracketSize,
-          height: bracketSize,
-          decoration: const BoxDecoration(
-            border: Border(
-              bottom: BorderSide(color: Colors.red, width: bracketWidth),
-              left: BorderSide(color: Colors.red, width: bracketWidth),
-            ),
-          ),
-        ),
-      ),
-      // Bottom-right
-      Positioned(
-        bottom: 0,
-        right: 0,
-        child: Container(
-          width: bracketSize,
-          height: bracketSize,
-          decoration: const BoxDecoration(
-            border: Border(
-              bottom: BorderSide(color: Colors.red, width: bracketWidth),
-              right: BorderSide(color: Colors.red, width: bracketWidth),
-            ),
-          ),
-        ),
-      ),
+      Positioned(top: 0, left: 0, child: Container(width: bracketSize, height: bracketSize,
+        decoration: const BoxDecoration(border: Border(top: BorderSide(color: color, width: bracketWidth), left: BorderSide(color: color, width: bracketWidth))))),
+      Positioned(top: 0, right: 0, child: Container(width: bracketSize, height: bracketSize,
+        decoration: const BoxDecoration(border: Border(top: BorderSide(color: color, width: bracketWidth), right: BorderSide(color: color, width: bracketWidth))))),
+      Positioned(bottom: 0, left: 0, child: Container(width: bracketSize, height: bracketSize,
+        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: color, width: bracketWidth), left: BorderSide(color: color, width: bracketWidth))))),
+      Positioned(bottom: 0, right: 0, child: Container(width: bracketSize, height: bracketSize,
+        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: color, width: bracketWidth), right: BorderSide(color: color, width: bracketWidth))))),
     ];
   }
 
@@ -523,8 +478,6 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
       return Image.memory(_capturedImageBytes!, fit: BoxFit.cover, width: double.infinity, height: double.infinity);
     }
 
-    // Only show bounding boxes for YOLO detections (classId < 10).
-    // EfficientNet is a whole-image classifier — no real bounding boxes.
     final drawableBoxes = _detectionResult!.boxes.where((b) => b.classId < 10).toList();
 
     return LayoutBuilder(
@@ -563,14 +516,12 @@ class BoundingBoxPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Decode image to get original dimensions
     final image = _decodeImageSync(imageBytes);
     if (image == null) return;
 
     final imageWidth = image.width.toDouble();
     final imageHeight = image.height.toDouble();
 
-    // Calculate scale based on fit mode
     final scaleX = size.width / imageWidth;
     final scaleY = size.height / imageHeight;
     final scale = fitMode == BoxFit.cover
@@ -580,56 +531,34 @@ class BoundingBoxPainter extends CustomPainter {
     final scaledWidth = imageWidth * scale;
     final scaledHeight = imageHeight * scale;
 
-    // Calculate offset to center image
     final offsetX = (size.width - scaledWidth) / 2;
     final offsetY = (size.height - scaledHeight) / 2;
 
-    // Draw each bounding box
     for (final box in boxes) {
       final x1 = box.x1 * scale + offsetX;
       final y1 = box.y1 * scale + offsetY;
       final x2 = box.x2 * scale + offsetX;
       final y2 = box.y2 * scale + offsetY;
 
-      // Color based on class
       Color boxColor = Colors.green;
-      if (box.className.contains('grey')) {
-        boxColor = Colors.blue;
-      }
+      if (box.className.contains('grey')) boxColor = Colors.blue;
 
       final paint = Paint()
         ..color = boxColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3;
 
-      canvas.drawRect(
-        Rect.fromLTRB(x1, y1, x2, y2),
-        paint,
-      );
+      canvas.drawRect(Rect.fromLTRB(x1, y1, x2, y2), paint);
 
-      // Draw label background
       final textSpan = TextSpan(
         text: box.className,
         style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
       );
-      final textPainter = TextPainter(
-        text: textSpan,
-        textDirection: TextDirection.ltr,
-      );
+      final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr);
       textPainter.layout();
 
-      final labelRect = Rect.fromLTWH(
-        x1,
-        y1 - textPainter.height - 4,
-        textPainter.width + 8,
-        textPainter.height + 4,
-      );
-
-      canvas.drawRect(
-        labelRect,
-        Paint()..color = boxColor.withOpacity(0.8),
-      );
-
+      final labelRect = Rect.fromLTWH(x1, y1 - textPainter.height - 4, textPainter.width + 8, textPainter.height + 4);
+      canvas.drawRect(labelRect, Paint()..color = boxColor.withOpacity(0.8));
       textPainter.paint(canvas, Offset(x1 + 4, y1 - textPainter.height - 2));
     }
   }
@@ -637,12 +566,9 @@ class BoundingBoxPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 
-  // Synchronous image decoder helper
   ({int width, int height})? _decodeImageSync(Uint8List bytes) {
-    // Simple PNG/JPEG header parsing to extract dimensions
     try {
       if (bytes.length > 24 && bytes[0] == 0xFF && bytes[1] == 0xD8) {
-        // JPEG
         int pos = 2;
         while (pos < bytes.length - 8) {
           if (bytes[pos] == 0xFF) {
@@ -657,7 +583,6 @@ class BoundingBoxPainter extends CustomPainter {
           }
         }
       } else if (bytes.length > 24 && bytes[0] == 0x89 && bytes[1] == 0x50) {
-        // PNG
         final width = (bytes[16] << 24) | (bytes[17] << 16) | (bytes[18] << 8) | bytes[19];
         final height = (bytes[20] << 24) | (bytes[21] << 16) | (bytes[22] << 8) | bytes[23];
         return (width: width, height: height);
