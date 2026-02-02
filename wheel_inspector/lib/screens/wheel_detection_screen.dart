@@ -157,10 +157,10 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
       final confidence = (firstBox.confidence * 100).toStringAsFixed(1);
 
       if (className.contains('OK') && !className.contains('NOT')) {
-        _resultMessage = '✓ $className\n($confidence% confidence)';
+        _resultMessage = '✓ $className';
         _resultColor = Colors.green;
       } else {
-        _resultMessage = '✗ $className\n($confidence% confidence)';
+        _resultMessage = '✗ $className';
         _resultColor = Colors.red;
       }
       print('EfficientNet result: $className ($confidence%)');
@@ -273,7 +273,7 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
               Expanded(
                 child: Container(
                   color: Colors.black,
-                  child: Center(
+                  child: SizedBox.expand(
                     child: _buildCameraOrImageView(),
                   ),
                 ),
@@ -296,41 +296,21 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      if (_detectionResult != null) ...[
+                      if (_detectionResult != null && _modelManager.currentType != ModelType.efficientnet) ...[
                         const SizedBox(height: 10),
-                        if (_modelManager.currentType == ModelType.efficientnet) ...[
-                          Text(
-                            'Model: EfficientNet-B0 (classifier)',
-                            style: TextStyle(fontSize: 12, color: Colors.black45),
-                          ),
-                          if (_preprocessedImageBytes != null) ...[
-                            const SizedBox(height: 8),
-                            const Text('Preprocessed input:', style: TextStyle(fontSize: 11, color: Colors.black45)),
-                            const SizedBox(height: 4),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.memory(_preprocessedImageBytes!, width: 112, height: 112),
-                            ),
-                          ],
-                        ] else ...[
-                          Text(
-                            'Detected: ${_detectionResult!.boxes.length} objects',
-                            style: const TextStyle(fontSize: 14, color: Colors.black54),
-                          ),
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: 8,
-                            children: _detectionResult!.boxes.map((box) {
-                              return Chip(
-                                label: Text(
-                                  '${box.className} (${(box.confidence * 100).toStringAsFixed(0)}%)',
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                                backgroundColor: Colors.blue.shade100,
-                              );
-                            }).toList(),
-                          ),
-                        ],
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 8,
+                          children: _detectionResult!.boxes.map((box) {
+                            return Chip(
+                              label: Text(
+                                box.className,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              backgroundColor: Colors.blue.shade100,
+                            );
+                          }).toList(),
+                        ),
                       ],
                     ],
                   ),
@@ -540,16 +520,19 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
 
   Widget _buildImageWithBoxes() {
     if (_capturedImageBytes == null || _detectionResult == null) {
-      return Image.memory(_capturedImageBytes!, fit: BoxFit.contain);
+      return Image.memory(_capturedImageBytes!, fit: BoxFit.cover, width: double.infinity, height: double.infinity);
     }
 
     return LayoutBuilder(
       builder: (context, constraints) {
         return Stack(
+          fit: StackFit.expand,
           children: [
             Image.memory(
               _capturedImageBytes!,
-              fit: BoxFit.contain,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
             ),
             // Draw bounding boxes
             CustomPaint(
@@ -557,6 +540,7 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
               painter: BoundingBoxPainter(
                 boxes: _detectionResult!.boxes,
                 imageBytes: _capturedImageBytes!,
+                fitMode: BoxFit.cover,
               ),
             ),
           ],
@@ -569,8 +553,9 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
 class BoundingBoxPainter extends CustomPainter {
   final List<BoundingBox> boxes;
   final Uint8List imageBytes;
+  final BoxFit fitMode;
 
-  BoundingBoxPainter({required this.boxes, required this.imageBytes});
+  BoundingBoxPainter({required this.boxes, required this.imageBytes, this.fitMode = BoxFit.contain});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -581,10 +566,12 @@ class BoundingBoxPainter extends CustomPainter {
     final imageWidth = image.width.toDouble();
     final imageHeight = image.height.toDouble();
 
-    // Calculate scale to fit in display
+    // Calculate scale based on fit mode
     final scaleX = size.width / imageWidth;
     final scaleY = size.height / imageHeight;
-    final scale = math.min(scaleX, scaleY);
+    final scale = fitMode == BoxFit.cover
+        ? math.max(scaleX, scaleY)
+        : math.min(scaleX, scaleY);
 
     final scaledWidth = imageWidth * scale;
     final scaledHeight = imageHeight * scale;
@@ -618,7 +605,7 @@ class BoundingBoxPainter extends CustomPainter {
 
       // Draw label background
       final textSpan = TextSpan(
-        text: '${box.className} ${(box.confidence * 100).toStringAsFixed(0)}%',
+        text: box.className,
         style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
       );
       final textPainter = TextPainter(
