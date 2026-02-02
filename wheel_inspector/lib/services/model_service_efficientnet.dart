@@ -18,13 +18,15 @@ class ModelServiceEfficientNet implements ModelService {
   bool _isLoaded = false;
   final String assetPath;
   final double cropRatio;
+  final int inputSize;
   late final ImagePreprocessor _preprocessor;
 
   ModelServiceEfficientNet({
     this.assetPath = 'assets/wheel_efficientnet.tflite',
     this.cropRatio = 0.55,
+    this.inputSize = 224,
   }) {
-    _preprocessor = ImagePreprocessor(cropRatio: cropRatio);
+    _preprocessor = ImagePreprocessor(cropRatio: cropRatio, targetSize: inputSize);
   }
 
   // Class names matching training order
@@ -83,7 +85,7 @@ class ModelServiceEfficientNet implements ModelService {
       logs.add('Model output: ${outputTensorInfo.shape} ${outputTensorInfo.type}');
 
       // Step 1: Preprocess (center crop + CLAHE + resize + normalize)
-      logs.add('Preprocessing: center crop (${(cropRatio * 100).toInt()}%) + CLAHE + resize 224x224');
+      logs.add('Preprocessing: center crop (${(cropRatio * 100).toInt()}%) + CLAHE + resize ${inputSize}x$inputSize');
       final inputTensor = _preprocessor.preprocess(imageBytes);
       logs.add('✓ Preprocessing complete');
 
