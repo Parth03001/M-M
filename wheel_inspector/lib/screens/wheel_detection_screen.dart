@@ -141,6 +141,17 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
       return;
     }
 
+    final confidence = result.boxes.first.confidence;
+    if (confidence < 0.50) {
+      _resultMessage = '';
+      _resultColor = Colors.grey;
+      // Show low-confidence dialog after frame renders
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showLowConfidenceDialog();
+      });
+      return;
+    }
+
     final className = result.boxes.first.className;
     if (className.contains('OK') && !className.contains('NOT')) {
       _resultMessage = '✓ $className';
@@ -149,6 +160,52 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
       _resultMessage = '✗ $className';
       _resultColor = Colors.red;
     }
+  }
+
+  void _showLowConfidenceDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF16213E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Low Confidence',
+          style: TextStyle(color: Colors.orangeAccent, fontWeight: FontWeight.bold),
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Please capture the image properly.',
+              style: TextStyle(color: Colors.white, fontSize: 15),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'Suggestions:',
+              style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+            SizedBox(height: 6),
+            Text(
+              '• Zoom in a little closer to the wheel\n'
+              '• Avoid capturing from too far away\n'
+              '• Make sure the wheel is centered in frame\n'
+              '• Ensure good lighting on the wheel',
+              style: TextStyle(color: Colors.white60, fontSize: 13, height: 1.5),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _retake();
+            },
+            child: const Text('Retake', style: TextStyle(color: Colors.orangeAccent, fontSize: 15)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _retake() {
@@ -174,10 +231,11 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
       appBar: AppBar(
         title: const Text(
           'Wheel Inspector',
-          style: TextStyle(fontWeight: FontWeight.w600, letterSpacing: 0.5),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, letterSpacing: 0.5),
         ),
         backgroundColor: const Color(0xFF16213E),
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             icon: Icon(
@@ -397,6 +455,7 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
         backgroundColor: color,
         disabledBackgroundColor: color.withOpacity(0.4),
         foregroundColor: Colors.white,
+        disabledForegroundColor: Colors.white70,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         elevation: 0,
       ),
