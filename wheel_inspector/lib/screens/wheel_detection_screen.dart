@@ -523,6 +523,10 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
       return Image.memory(_capturedImageBytes!, fit: BoxFit.cover, width: double.infinity, height: double.infinity);
     }
 
+    // Only show bounding boxes for YOLO detections (classId < 10).
+    // EfficientNet is a whole-image classifier — no real bounding boxes.
+    final drawableBoxes = _detectionResult!.boxes.where((b) => b.classId < 10).toList();
+
     return LayoutBuilder(
       builder: (context, constraints) {
         return Stack(
@@ -534,15 +538,15 @@ class _WheelDetectionScreenState extends State<WheelDetectionScreen> {
               width: double.infinity,
               height: double.infinity,
             ),
-            // Draw bounding boxes
-            CustomPaint(
-              size: Size(constraints.maxWidth, constraints.maxHeight),
-              painter: BoundingBoxPainter(
-                boxes: _detectionResult!.boxes,
-                imageBytes: _capturedImageBytes!,
-                fitMode: BoxFit.cover,
+            if (drawableBoxes.isNotEmpty)
+              CustomPaint(
+                size: Size(constraints.maxWidth, constraints.maxHeight),
+                painter: BoundingBoxPainter(
+                  boxes: drawableBoxes,
+                  imageBytes: _capturedImageBytes!,
+                  fitMode: BoxFit.cover,
+                ),
               ),
-            ),
           ],
         );
       },
