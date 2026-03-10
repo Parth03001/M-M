@@ -33,4 +33,3 @@ flutter:
     - assets/wheel_efficientnet_AUG.tflite
     - assets/wheel_efficientnet_CROP.tflite
     - assets/wheel_efficientnet_v2_small.tflite
-    - assets/labels.txt
